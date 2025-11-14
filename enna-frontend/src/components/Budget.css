@@ -108,10 +108,11 @@
 
 /* Budget Categories Grid */
 .budget-categories {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
   gap: 20px;
 }
+
 
 .budget-category-card {
   background: rgba(45, 45, 45, 0.8);

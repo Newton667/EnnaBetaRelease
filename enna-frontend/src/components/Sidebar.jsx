@@ -16,7 +16,11 @@ function Sidebar({ isOpen, onToggle, currentView, onViewChange }) {
       {/* Sidebar Header */}
       <div className="sidebar-header">
         <div className="logo">
-          <span className="logo-icon">💰</span>
+            <img 
+              src="/Logo.png" 
+              alt="Enna Logo" 
+              className="logo-image" 
+            />
           {isOpen && <span className="logo-text">Enna</span>}
         </div>
       </div>
