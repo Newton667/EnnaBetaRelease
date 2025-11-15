@@ -80,6 +80,20 @@ class EnnaDatabase:
             )
         ''')
         
+        # Streak tracking table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_stats (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                longest_streak INTEGER DEFAULT 0,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Initialize user_stats if empty
+        cursor.execute('SELECT COUNT(*) FROM user_stats')
+        if cursor.fetchone()[0] == 0:
+            cursor.execute('INSERT INTO user_stats (longest_streak) VALUES (0)')
+        
         # Insert default categories if none exist
         cursor.execute('SELECT COUNT(*) FROM categories')
         if cursor.fetchone()[0] == 0:
@@ -90,6 +104,7 @@ class EnnaDatabase:
                 ('Bills & Utilities', '#f59e0b', '💡'),
                 ('Shopping', '#8b5cf6', '🛍️'),
                 ('Healthcare', '#ef4444', '🏥'),
+                ('Debt', '#ef4444', '💳'),
                 ('Income', '#10b981', '💰'),
                 ('Other', '#6b7280', '📦')
             ]
@@ -255,7 +270,7 @@ class EnnaDatabase:
         
         # Expenses by category
         cursor.execute(f'''
-            SELECT c.name, c.color, c.icon, COALESCE(SUM(t.amount), 0) as total
+            SELECT c.id, c.name, c.color, c.icon, COALESCE(SUM(t.amount), 0) as total
             FROM categories c
             LEFT JOIN transactions t ON c.id = t.category_id AND t.type = 'expense'{date_filter}
             GROUP BY c.id, c.name, c.color, c.icon
@@ -270,6 +285,96 @@ class EnnaDatabase:
             'total_expenses': total_expenses,
             'net': total_income - total_expenses,
             'expenses_by_category': expenses_by_category
+        }
+    
+    # ============= STREAK METHODS =============
+    
+    def get_current_streak(self):
+        """Calculate current streak of consecutive days with transactions"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Get all unique transaction dates, ordered by date descending
+        cursor.execute('''
+            SELECT DISTINCT date(date) as trans_date
+            FROM transactions
+            ORDER BY date(date) DESC
+        ''')
+        
+        dates = [row[0] for row in cursor.fetchall()]
+        
+        if not dates:
+            return 0
+        
+        # Get today's date in local timezone
+        from datetime import datetime, timedelta
+        today = datetime.now().date()
+        
+        # Convert string dates to date objects
+        date_objects = [datetime.strptime(d, '%Y-%m-%d').date() for d in dates]
+        
+        # Check if streak is still active
+        # Streak is active if there's a transaction today OR yesterday
+        most_recent = date_objects[0]
+        days_since_last = (today - most_recent).days
+        
+        if days_since_last > 1:
+            # Streak is broken - no transaction yesterday or today
+            return 0
+        
+        # Count consecutive days
+        streak = 0
+        expected_date = most_recent
+        
+        for trans_date in date_objects:
+            if trans_date == expected_date:
+                streak += 1
+                expected_date = trans_date - timedelta(days=1)
+            elif trans_date == expected_date + timedelta(days=1):
+                # Skip if we're counting backwards and find today again
+                continue
+            else:
+                # Gap found, streak ends
+                break
+        
+        return streak
+    
+    def get_longest_streak(self):
+        """Get the longest streak ever achieved"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT longest_streak FROM user_stats WHERE id = 1')
+        result = cursor.fetchone()
+        return result[0] if result else 0
+    
+    def update_longest_streak(self, streak):
+        """Update longest streak if current streak is higher"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        current_longest = self.get_longest_streak()
+        if streak > current_longest:
+            cursor.execute('''
+                UPDATE user_stats 
+                SET longest_streak = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = 1
+            ''', (streak,))
+            conn.commit()
+            return True
+        return False
+    
+    def get_streak_data(self):
+        """Get comprehensive streak data"""
+        current_streak = self.get_current_streak()
+        longest_streak = self.get_longest_streak()
+        
+        # Update longest streak if current is higher
+        self.update_longest_streak(current_streak)
+        longest_streak = max(longest_streak, current_streak)
+        
+        return {
+            'current_streak': current_streak,
+            'longest_streak': longest_streak
         }
     
     def close(self):

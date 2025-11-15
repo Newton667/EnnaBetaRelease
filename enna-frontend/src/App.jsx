@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Budget from './components/Budget';
+import Streaks from './components/Streaks';
 import Tutorial from './components/Tutorial';
 import Clock from './components/Clock';
 import './App.css';
@@ -12,7 +13,8 @@ function App() {
   const [backendConnected, setBackendConnected] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [isCheckingTutorial, setIsCheckingTutorial] = useState(true);
-  const [streak, setStreak] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [longestStreak, setLongestStreak] = useState(0);
 
   // Define testBackend function FIRST
   const testBackend = async () => {
@@ -26,39 +28,20 @@ function App() {
     }
   };
 
-  // Streak tracking system
-  const updateStreak = () => {
-    const today = new Date().toDateString();
-    const lastVisit = localStorage.getItem('enna_last_visit');
-    const currentStreak = parseInt(localStorage.getItem('enna_streak') || '0');
-
-    if (!lastVisit) {
-      // First time user
-      localStorage.setItem('enna_last_visit', today);
-      localStorage.setItem('enna_streak', '1');
-      setStreak(1);
-      return;
-    }
-
-    const lastVisitDate = new Date(lastVisit);
-    const todayDate = new Date(today);
-    const diffTime = todayDate - lastVisitDate;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      // Same day - keep current streak
-      setStreak(currentStreak);
-    } else if (diffDays === 1) {
-      // Consecutive day - increment streak
-      const newStreak = currentStreak + 1;
-      localStorage.setItem('enna_last_visit', today);
-      localStorage.setItem('enna_streak', newStreak.toString());
-      setStreak(newStreak);
-    } else {
-      // Missed days - reset streak
-      localStorage.setItem('enna_last_visit', today);
-      localStorage.setItem('enna_streak', '1');
-      setStreak(1);
+  // Fetch streak data from database
+  const fetchStreaks = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/streaks');
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setCurrentStreak(data.streaks.current_streak);
+        setLongestStreak(data.streaks.longest_streak);
+      }
+    } catch (error) {
+      console.error('Failed to fetch streaks:', error);
+      setCurrentStreak(0);
+      setLongestStreak(0);
     }
   };
 
@@ -93,8 +76,18 @@ function App() {
   useEffect(() => {
     testBackend();
     checkTutorialStatus();
-    updateStreak();
+    fetchStreaks(); // Fetch streaks from database instead of localStorage
+    
+    // Refresh streaks every 30 seconds to stay updated when transactions are added
+    const streakInterval = setInterval(fetchStreaks, 30000);
+    
+    return () => clearInterval(streakInterval);
   }, []);
+
+  // Refresh streaks when view changes (in case transactions were added)
+  useEffect(() => {
+    fetchStreaks();
+  }, [currentView]);
 
   const handleTutorialComplete = () => {
     setShowTutorial(false);
@@ -113,6 +106,8 @@ function App() {
         return <div className="view-placeholder">🏷️ Categories view coming soon!</div>;
       case 'reports':
         return <div className="view-placeholder">📈 Reports view coming soon!</div>;
+      case 'streaks':
+        return <Streaks />;
       case 'settings':
         return <div className="view-placeholder">⚙️ Settings view coming soon!</div>;
       default:
@@ -163,10 +158,10 @@ function App() {
 
           <div className="top-bar-center">
             <Clock />
-            <div className="streak-display" title="Days streak">
+            <div className="streak-display" title={`Current: ${currentStreak} days | Longest: ${longestStreak} days`}>
               <span className="streak-icon">🔥</span>
-              <span className="streak-count">{streak}</span>
-              <span className="streak-label">day{streak !== 1 ? 's' : ''}</span>
+              <span className="streak-count">{currentStreak}</span>
+              <span className="streak-label">day{currentStreak !== 1 ? 's' : ''}</span>
             </div>
           </div>
 

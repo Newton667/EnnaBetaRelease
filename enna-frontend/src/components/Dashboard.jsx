@@ -74,9 +74,15 @@ const Dashboard = () => {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      // Use local date instead of UTC to avoid timezone issues
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const fullDate = `${year}-${month}-${day}`;
+      
       last30Days.push({
         date: dateStr,
-        fullDate: date.toISOString().split('T')[0],
+        fullDate: fullDate,
         expenses: 0,
         cumulative: 0
       });
@@ -112,7 +118,12 @@ const Dashboard = () => {
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
+      // Use local date instead of UTC to avoid timezone issues
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
       last7Days.push({
         date: dateStr,
         amount: 0
@@ -383,6 +394,7 @@ const Dashboard = () => {
                     {hasData ? (
                       <ResponsiveContainer width="100%" height={50}>
                         <LineChart data={chartData}>
+                          <XAxis dataKey="date" hide />
                           <Tooltip 
                             contentStyle={{ 
                               backgroundColor: 'rgba(30, 30, 30, 0.95)', 
@@ -393,7 +405,7 @@ const Dashboard = () => {
                             }}
                             formatter={(value) => [`$${value.toFixed(2)}`, 'Spent']}
                             labelFormatter={(label) => {
-                              const date = new Date(label);
+                              const date = new Date(label + 'T12:00:00');
                               return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                             }}
                           />

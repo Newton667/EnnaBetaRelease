@@ -235,6 +235,20 @@ def get_budget():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+# ============= STREAK ENDPOINTS =============
+
+@app.route('/api/streaks', methods=['GET'])
+def get_streaks():
+    """Get current and longest streak data"""
+    try:
+        streak_data = db.get_streak_data()
+        return jsonify({
+            'status': 'success',
+            'streaks': streak_data
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 # ============= HEALTH CHECK =============
 
 @app.route('/api/health', methods=['GET'])
