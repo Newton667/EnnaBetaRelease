@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Budget from './components/Budget';
 import Streaks from './components/Streaks';
+import Transactions from './components/Transactions';
 import Tutorial from './components/Tutorial';
 import Clock from './components/Clock';
 import './App.css';
@@ -101,7 +102,7 @@ function App() {
       case 'budget':
         return <Budget />;
       case 'transactions':
-        return <div className="view-placeholder">📊 Transactions view coming soon!</div>;
+        return <Transactions />;
       case 'categories':
         return <div className="view-placeholder">🏷️ Categories view coming soon!</div>;
       case 'reports':

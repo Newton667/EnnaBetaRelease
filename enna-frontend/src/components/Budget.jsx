@@ -157,7 +157,14 @@ const Budget = () => {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading budget data...</div>;
+    return (
+      <div className="budget-page">
+        <div className="loading">
+          <div className="loading-spinner"></div>
+          <p>Loading budget data...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
