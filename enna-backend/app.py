@@ -268,6 +268,54 @@ def health_check():
             'message': str(e)
         }), 500
 
+# ============= USER ENDPOINTS =============
+
+@app.route('/api/user/name', methods=['GET'])
+def get_user_name():
+    """Get the user's name"""
+    try:
+        name = db.get_user_name()
+        return jsonify({
+            'status': 'success',
+            'name': name
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/user/name', methods=['POST'])
+def set_user_name():
+    """Set the user's name"""
+    try:
+        data = request.json
+        
+        if 'name' not in data:
+            return jsonify({
+                'status': 'error',
+                'message': 'Missing required field: name'
+            }), 400
+        
+        db.set_user_name(data['name'])
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Name updated successfully',
+            'name': data['name']
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/database/reset', methods=['POST'])
+def reset_database():
+    """Reset all data in the database"""
+    try:
+        db.reset_database()
+        return jsonify({
+            'status': 'success',
+            'message': 'Database reset successfully'
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 if __name__ == '__main__':
     print("🚀 Starting Enna Backend...")
     print("📊 Database initialized")

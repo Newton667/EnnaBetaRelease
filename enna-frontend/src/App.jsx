@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import Budget from './components/Budget';
 import Streaks from './components/Streaks';
 import Transactions from './components/Transactions';
+import Settings from './components/Settings';
 import Tutorial from './components/Tutorial';
 import Clock from './components/Clock';
 import './App.css';
@@ -110,7 +111,7 @@ function App() {
       case 'streaks':
         return <Streaks />;
       case 'settings':
-        return <div className="view-placeholder">⚙️ Settings view coming soon!</div>;
+        return <Settings />;
       default:
         return <Dashboard />;
     }

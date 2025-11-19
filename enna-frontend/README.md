@@ -24,3 +24,9 @@ python app.py
 ## Terminal 2 - Frontend  
 cd enna-frontend
 npm run dev
+
+## How to commit?
+git status
+git add .
+git commit -m "Your descriptive commit message"
+git push origin main

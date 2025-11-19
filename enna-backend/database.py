@@ -80,10 +80,11 @@ class EnnaDatabase:
             )
         ''')
         
-        # Streak tracking table
+        # Streak tracking table with user name
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS user_stats (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_name TEXT DEFAULT 'Friend',
                 longest_streak INTEGER DEFAULT 0,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -92,7 +93,13 @@ class EnnaDatabase:
         # Initialize user_stats if empty
         cursor.execute('SELECT COUNT(*) FROM user_stats')
         if cursor.fetchone()[0] == 0:
-            cursor.execute('INSERT INTO user_stats (longest_streak) VALUES (0)')
+            cursor.execute('INSERT INTO user_stats (user_name, longest_streak) VALUES (?, ?)', ('Friend', 0))
+        
+        # Add user_name column if it doesn't exist (for existing databases)
+        cursor.execute("PRAGMA table_info(user_stats)")
+        columns = [column[1] for column in cursor.fetchall()]
+        if 'user_name' not in columns:
+            cursor.execute('ALTER TABLE user_stats ADD COLUMN user_name TEXT DEFAULT "Friend"')
         
         # Insert default categories if none exist
         cursor.execute('SELECT COUNT(*) FROM categories')
@@ -376,6 +383,49 @@ class EnnaDatabase:
             'current_streak': current_streak,
             'longest_streak': longest_streak
         }
+    
+    # ============= USER METHODS =============
+    
+    def get_user_name(self):
+        """Get the user's name"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT user_name FROM user_stats WHERE id = 1')
+        result = cursor.fetchone()
+        return result[0] if result else 'Friend'
+    
+    def set_user_name(self, name):
+        """Set the user's name"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            UPDATE user_stats 
+            SET user_name = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = 1
+        ''', (name,))
+        conn.commit()
+        return True
+    
+    def reset_database(self):
+        """Reset all data in the database (DANGER!)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Delete all transactions
+        cursor.execute('DELETE FROM transactions')
+        
+        # Delete all budget allocations
+        cursor.execute('DELETE FROM budget_allocations')
+        
+        # Reset user stats (keep structure, reset data)
+        cursor.execute('''
+            UPDATE user_stats 
+            SET user_name = 'Friend', longest_streak = 0, updated_at = CURRENT_TIMESTAMP
+            WHERE id = 1
+        ''')
+        
+        conn.commit()
+        return True
     
     def close(self):
         """Close database connection"""

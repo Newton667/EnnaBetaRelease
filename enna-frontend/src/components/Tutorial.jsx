@@ -4,6 +4,7 @@ import './Tutorial.css';
 function Tutorial({ onComplete }) {
   const [step, setStep] = useState(0);
   const [isTalking, setIsTalking] = useState(false);
+  const [userName, setUserName] = useState('');
   const [monthlyIncome, setMonthlyIncome] = useState('');
   const [expenses, setExpenses] = useState([]);
   const [currentExpense, setCurrentExpense] = useState({
@@ -63,6 +64,12 @@ function Tutorial({ onComplete }) {
 
   const handleIncomeSubmit = () => {
     if (monthlyIncome && parseFloat(monthlyIncome) > 0) {
+      setStep(3);
+    }
+  };
+
+  const handleNameSubmit = () => {
+    if (userName.trim()) {
       setStep(2);
     }
   };
@@ -74,7 +81,7 @@ function Tutorial({ onComplete }) {
   };
 
   const handleProceedToStreak = () => {
-    setStep(3);
+    setStep(4);
   };
 
   const handleAddExpense = () => {
@@ -95,6 +102,13 @@ function Tutorial({ onComplete }) {
 
   const handleComplete = async () => {
     try {
+      // Save user name
+      await fetch('http://localhost:5000/api/user/name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: userName })
+      });
+
       // Add income transaction
       await fetch('http://localhost:5000/api/transactions', {
         method: 'POST',
@@ -143,8 +157,12 @@ function Tutorial({ onComplete }) {
       subtext: "Let's get you set up with your first budget. This will only take a minute!"
     },
     {
-      text: "First, what's your total monthly income?",
-      subtext: "This is the money you earn each month from all sources."
+      text: "First, what's your name?",
+      subtext: "I'd love to get to know you better!"
+    },
+    {
+      text: `Nice to meet you, ${userName}! 😊`,
+      subtext: "Now, what's your total monthly income?"
     },
     {
       text: "Great! Now let's add your monthly expenses.",
@@ -183,8 +201,37 @@ function Tutorial({ onComplete }) {
           </div>
         )}
 
-        {/* Step 1: Income Input */}
+        {/* Step 1: Name Input */}
         {step === 1 && (
+          <div className="tutorial-step">
+            <div className="input-group">
+              <label>Your Name</label>
+              <input
+                type="text"
+                placeholder="Enter your name"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleNameSubmit()}
+                autoFocus
+              />
+            </div>
+            <div className="button-row">
+              <button className="btn-back" onClick={handleGoBack}>
+                ← Back
+              </button>
+              <button 
+                className="btn-primary"
+                onClick={handleNameSubmit}
+                disabled={!userName.trim()}
+              >
+                Next ➜
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Income Input */}
+        {step === 2 && (
           <div className="tutorial-step">
             <div className="input-group">
               <label>Monthly Income</label>
@@ -217,8 +264,8 @@ function Tutorial({ onComplete }) {
           </div>
         )}
 
-        {/* Step 2: Expenses */}
-        {step === 2 && (
+        {/* Step 3: Expenses */}
+        {step === 3 && (
           <div className="tutorial-step expenses-step">
             {/* Expense Input */}
             <div className="expense-input-section">
@@ -329,8 +376,8 @@ function Tutorial({ onComplete }) {
           </div>
         )}
 
-        {/* Step 3: Streak System Explanation */}
-        {step === 3 && (
+        {/* Step 4: Streak System Explanation */}
+        {step === 4 && (
           <div className="tutorial-step">
             <div className="streak-info">
               <div className="streak-visual">

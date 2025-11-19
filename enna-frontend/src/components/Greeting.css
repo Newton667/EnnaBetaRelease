@@ -1,0 +1,56 @@
+/* Greeting Container */
+.greeting-container {
+  margin-bottom: 30px;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.greeting-text {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.user-name {
+  color: #34d399;
+  position: relative;
+}
+
+.user-name::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #34d399, transparent);
+  border-radius: 2px;
+}
+
+.greeting-subtitle {
+  color: #a0a0a0;
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .greeting-text {
+    font-size: 24px;
+  }
+
+  .greeting-subtitle {
+    font-size: 14px;
+  }
+}

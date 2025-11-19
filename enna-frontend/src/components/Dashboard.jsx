@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import Greeting from './Greeting';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -210,21 +211,16 @@ const Dashboard = () => {
   };
 
   if (isLoading) {
-    return (
-      <div className="dashboard">
-        <div className="loading">
-          <div className="loading-spinner"></div>
-          <p>Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    return <div className="loading">Loading dashboard...</div>;
   }
 
   return (
     <div className="dashboard">
+      {/* Greeting */}
+      <Greeting />
+
       {/* Dashboard Header */}
       <div className="dashboard-header">
-        <h1>📊 Dashboard</h1>
         <button 
           className="btn-add"
           onClick={() => {
