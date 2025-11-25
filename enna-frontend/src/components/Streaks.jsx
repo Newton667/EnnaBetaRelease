@@ -133,7 +133,12 @@ const Streaks = () => {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading streak data...</div>;
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p className="loading-text">Loading streak data...</p>
+      </div>
+    );
   }
 
   const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });

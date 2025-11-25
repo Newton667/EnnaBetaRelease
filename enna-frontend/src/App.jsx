@@ -6,6 +6,7 @@ import Streaks from './components/Streaks';
 import Transactions from './components/Transactions';
 import Settings from './components/Settings';
 import Tutorial from './components/Tutorial';
+import Reports from './components/Reports';
 import Clock from './components/Clock';
 import './App.css';
 
@@ -107,7 +108,7 @@ function App() {
       case 'categories':
         return <div className="view-placeholder">🏷️ Categories view coming soon!</div>;
       case 'reports':
-        return <div className="view-placeholder">📈 Reports view coming soon!</div>;
+        return <Reports />;
       case 'streaks':
         return <Streaks />;
       case 'settings':

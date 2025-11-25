@@ -1,4 +1,5 @@
 /* Transactions Container */
+/* Updated: 2025-11-24 - Cache buster v3 */
 .transactions-container {
   padding: 30px;
   max-width: 1400px;
@@ -253,7 +254,38 @@
 .transactions-list {
   display: flex;
   flex-direction: column;
+  gap: 24px;
+}
+
+.transaction-group {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+}
+
+/* Date Group Header */
+.date-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(52, 211, 153, 0.05);
+  border-left: 3px solid #34d399;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.date-group-title {
+  color: #34d399;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.date-group-count {
+  color: #a0a0a0;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .transaction-item {
@@ -421,13 +453,15 @@
 
 .modal-content {
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-  border: 1px solid rgba(52, 211, 153, 0.3);
+  border: 1px solid rgba(52, 211, 153, 0.3) !important;
   border-radius: 16px;
   width: 90%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
-  animation: slideUp 0.3s ease;
+  animation: slideUp 0.2s ease;
+  position: relative;
+  z-index: 1;
 }
 
 @keyframes slideUp {
@@ -450,14 +484,15 @@
 }
 
 .modal-header h2 {
-  color: #ffffff;
+  color: #ffffff !important;
   font-size: 24px;
+  font-weight: 600;
 }
 
 .modal-close {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: #ef4444;
+  background: rgba(160, 160, 160, 0.1);
+  border: 1px solid rgba(160, 160, 160, 0.3);
+  color: #a0a0a0;
   border-radius: 8px;
   width: 32px;
   height: 32px;
@@ -470,7 +505,9 @@
 }
 
 .modal-close:hover {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(160, 160, 160, 0.2);
+  border-color: rgba(160, 160, 160, 0.5);
+  color: #ffffff;
   transform: scale(1.1);
 }
 
@@ -556,41 +593,45 @@
 
 /* Form Actions */
 .form-actions {
-  display: flex;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
   gap: 12px;
   margin-top: 24px;
 }
 
-.btn-cancel,
-.btn-submit {
-  flex: 1;
-  padding: 12px;
-  border-radius: 8px;
+.transaction-form .form-actions .btn-cancel,
+.transaction-form .form-actions .btn-submit {
+  padding: 14px 24px;
+  border-radius: 10px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  border: 1px solid transparent;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.btn-cancel {
-  background: rgba(30, 30, 30, 0.6);
-  border: 1px solid rgba(52, 211, 153, 0.2);
-  color: #a0a0a0;
-}
-
-.btn-cancel:hover {
+.transaction-form .form-actions .btn-cancel {
   background: rgba(30, 30, 30, 0.8);
   border-color: rgba(52, 211, 153, 0.3);
+  color: #ffffff;
 }
 
-.btn-submit {
+.transaction-form .form-actions .btn-cancel:hover {
+  background: rgba(40, 40, 40, 0.9);
+  border-color: rgba(52, 211, 153, 0.5);
+  transform: translateY(-2px);
+}
+
+.transaction-form .form-actions .btn-submit {
   background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-  border: none;
+  border-color: transparent;
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
 }
 
-.btn-submit:hover {
+.transaction-form .form-actions .btn-submit:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(52, 211, 153, 0.4);
 }
@@ -657,3 +698,145 @@
     margin: 20px;
   }
 }
+
+/* Confirmation Dialog */
+.confirmation-dialog {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.2s ease;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.confirmation-header {
+  padding: 24px 24px 20px 24px;
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+  text-align: center;
+}
+
+.confirmation-header h3 {
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.warning-icon {
+  font-size: 24px;
+}
+
+.confirmation-body {
+  padding: 24px;
+}
+
+.confirmation-body p {
+  color: #d0d0d0;
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.confirmation-body p:first-child {
+  font-size: 16px;
+  font-weight: 500;
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.confirmation-body p:nth-child(2) {
+  color: #a0a0a0;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.transaction-preview {
+  background: rgba(30, 30, 30, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.transaction-preview-item {
+  color: #ffffff;
+  font-size: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.transaction-preview-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.transaction-preview-item:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.preview-label {
+  color: #a0a0a0;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.preview-value {
+  font-weight: 600;
+  font-size: 14px;
+  color: #ffffff;
+}
+
+.confirmation-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 24px 24px 24px;
+}
+
+.btn-confirm-cancel,
+.btn-confirm-delete {
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.btn-confirm-cancel {
+  background: rgba(30, 30, 30, 0.8);
+  border-color: rgba(52, 211, 153, 0.3);
+  color: #ffffff;
+}
+
+.btn-confirm-cancel:hover {
+  background: rgba(40, 40, 40, 0.9);
+  border-color: rgba(52, 211, 153, 0.5);
+  transform: translateY(-2px);
+}
+
+.btn-confirm-delete {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-confirm-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+

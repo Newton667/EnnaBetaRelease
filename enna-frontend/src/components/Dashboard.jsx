@@ -13,7 +13,6 @@ const Dashboard = () => {
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isClosing, setIsClosing] = useState(false);
   const [chartData, setChartData] = useState([]);
   
   // Form states
@@ -148,14 +147,6 @@ const Dashboard = () => {
     return last7Days;
   };
 
-  const handleCloseTransaction = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setShowAddTransaction(false);
-      setIsClosing(false);
-    }, 300);
-  };
-
   const handleAddTransaction = async (e) => {
     e.preventDefault();
     
@@ -179,8 +170,8 @@ const Dashboard = () => {
           category_id: ''
         });
         
-        // Close form with animation
-        handleCloseTransaction();
+        // Close form
+        setShowAddTransaction(false);
         
         // Refresh data
         fetchData();
@@ -211,7 +202,12 @@ const Dashboard = () => {
   };
 
   if (isLoading) {
-    return <div className="loading">Loading dashboard...</div>;
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p className="loading-text">Loading dashboard...</p>
+      </div>
+    );
   }
 
   return (
@@ -223,13 +219,7 @@ const Dashboard = () => {
       <div className="dashboard-header">
         <button 
           className="btn-add"
-          onClick={() => {
-            if (showAddTransaction) {
-              handleCloseTransaction();
-            } else {
-              setShowAddTransaction(true);
-            }
-          }}
+          onClick={() => setShowAddTransaction(!showAddTransaction)}
         >
           {showAddTransaction ? '✕ Cancel' : '+ Add Transaction'}
         </button>
@@ -237,7 +227,7 @@ const Dashboard = () => {
 
       {/* Add Transaction Form */}
       {showAddTransaction && (
-        <div className={`add-transaction-form ${isClosing ? 'closing' : ''}`}>
+        <div className="add-transaction-form">
           <h3>Add New Transaction</h3>
           <form onSubmit={handleAddTransaction}>
             <div className="form-row">
