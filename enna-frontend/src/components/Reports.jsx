@@ -348,6 +348,39 @@ const Reports = () => {
               {overallMetric.score >= 40 && overallMetric.score < 60 && "Your financial health is fair. Several areas need attention. Review the advice below and create an action plan to improve your scores."}
               {overallMetric.score < 40 && "Your finances need immediate attention. Multiple areas are concerning. Start with the lowest-scoring metrics and make changes today."}
             </p>
+            
+            <div className="score-breakdown">
+              <h4>How Your Score is Calculated</h4>
+              <div className="breakdown-items">
+                <div className="breakdown-item">
+                  <span className="breakdown-label">💰 Savings Rate</span>
+                  <span className="breakdown-calc">{savingsMetric.score} × 35%</span>
+                  <span className="breakdown-value">= {Math.round(savingsMetric.score * 0.35)}</span>
+                </div>
+                <div className="breakdown-item">
+                  <span className="breakdown-label">🎯 Budget Adherence</span>
+                  <span className="breakdown-calc">{budgetMetric.score} × 30%</span>
+                  <span className="breakdown-value">= {Math.round(budgetMetric.score * 0.30)}</span>
+                </div>
+                <div className="breakdown-item">
+                  <span className="breakdown-label">📅 Tracking Consistency</span>
+                  <span className="breakdown-calc">{consistencyMetric.score} × 20%</span>
+                  <span className="breakdown-value">= {Math.round(consistencyMetric.score * 0.20)}</span>
+                </div>
+                <div className="breakdown-item">
+                  <span className="breakdown-label">⚖️ Spending Balance</span>
+                  <span className="breakdown-calc">{balanceMetric.score} × 15%</span>
+                  <span className="breakdown-value">= {Math.round(balanceMetric.score * 0.15)}</span>
+                </div>
+                <div className="breakdown-total">
+                  <span className="breakdown-label">Total Score</span>
+                  <span className="breakdown-value-large">{overallMetric.score}</span>
+                </div>
+              </div>
+              <p className="breakdown-note">
+                💡 Each metric contributes differently to your overall financial health score
+              </p>
+            </div>
           </div>
         </div>
       </div>

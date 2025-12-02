@@ -161,8 +161,98 @@
   color: #d0d0d0;
   font-size: 16px;
   line-height: 1.6;
-  margin: 0;
+  margin: 0 0 20px 0;
 }
+
+/* Score Breakdown */
+.score-breakdown {
+  background: rgba(20, 20, 20, 0.5);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.score-breakdown h4 {
+  color: #34d399;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.breakdown-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.breakdown-item {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 0.8fr;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(30, 30, 30, 0.4);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.breakdown-label {
+  color: #d0d0d0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.breakdown-calc {
+  color: #a0a0a0;
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+  text-align: center;
+}
+
+.breakdown-value {
+  color: #34d399;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: right;
+}
+
+.breakdown-total {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 0.8fr;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 12px;
+  background: rgba(52, 211, 153, 0.1);
+  border: 2px solid rgba(52, 211, 153, 0.3);
+  border-radius: 8px;
+  margin-top: 8px;
+}
+
+.breakdown-total .breakdown-label {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.breakdown-value-large {
+  color: #34d399;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: right;
+  grid-column: 2 / 4;
+}
+
+.breakdown-note {
+  color: #a0a0a0;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 12px 0 0 0;
+  font-style: italic;
+}
+
 
 /* Metrics Grid */
 .metrics-grid {
@@ -370,6 +460,52 @@
   .overall-description {
     font-size: 14px;
   }
+
+  .score-breakdown {
+    padding: 16px;
+  }
+
+  .score-breakdown h4 {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .breakdown-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 12px;
+  }
+
+  .breakdown-label {
+    font-size: 13px;
+  }
+
+  .breakdown-calc {
+    font-size: 12px;
+    text-align: left;
+  }
+
+  .breakdown-value {
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .breakdown-total {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 12px;
+  }
+
+  .breakdown-value-large {
+    font-size: 20px;
+    text-align: left;
+    grid-column: 1;
+  }
+
+  .breakdown-note {
+    font-size: 12px;
+  }
+
 
   .metrics-grid {
     grid-template-columns: 1fr;
