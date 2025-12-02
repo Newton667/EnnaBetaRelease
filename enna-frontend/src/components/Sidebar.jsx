@@ -6,7 +6,6 @@ function Sidebar({ isOpen, onToggle, currentView, onViewChange }) {
     { id: 'dashboard', icon: '📊', label: 'Dashboard' },
     { id: 'budget', icon: '💵', label: 'Budget' },
     { id: 'transactions', icon: '💸', label: 'Transactions' },
-    { id: 'categories', icon: '🏷️', label: 'Categories' },
     { id: 'reports', icon: '📈', label: 'Reports' },
     { id: 'streaks', icon: '🔥', label: 'Streaks' },
     { id: 'settings', icon: '⚙️', label: 'Settings' },

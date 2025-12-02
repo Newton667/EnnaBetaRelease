@@ -8,10 +8,12 @@ import Settings from './components/Settings';
 import Tutorial from './components/Tutorial';
 import Reports from './components/Reports';
 import Clock from './components/Clock';
+import Calculator from './components/Calculator';
 import './App.css';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
   const [currentView, setCurrentView] = useState('dashboard');
   const [backendConnected, setBackendConnected] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -169,6 +171,13 @@ function App() {
           </div>
 
           <div className="top-bar-right">
+            <button 
+              className="toggle-calculator-btn"
+              onClick={() => setCalculatorOpen(!calculatorOpen)}
+              title={calculatorOpen ? 'Close calculator' : 'Open calculator'}
+            >
+              <img src="/Calculator.png" alt="Calculator" className="calculator-icon-img" />
+            </button>
             <div className={`connection-status ${backendConnected ? 'connected' : 'disconnected'}`}>
               <div className="status-dot"></div>
               <span>{backendConnected ? 'Connected' : 'Disconnected'}</span>
@@ -181,6 +190,12 @@ function App() {
           {renderView()}
         </div>
       </div>
+
+      {/* Right Sidebar - Calculator */}
+      <Calculator 
+        isOpen={calculatorOpen}
+        onToggle={() => setCalculatorOpen(!calculatorOpen)}
+      />
     </div>
   );
 }
