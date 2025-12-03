@@ -25,6 +25,7 @@ const Reports = () => {
       const summaryData = await summaryRes.json();
       if (summaryData.status === 'success') {
         setSummary(summaryData.summary);
+        console.log('Summary data:', summaryData.summary);
       }
 
       // Fetch transactions
@@ -32,6 +33,7 @@ const Reports = () => {
       const transData = await transRes.json();
       if (transData.status === 'success') {
         setTransactions(transData.transactions);
+        console.log('Transactions count:', transData.transactions.length);
       }
 
       // Fetch budgets
@@ -39,6 +41,7 @@ const Reports = () => {
       const budgetData = await budgetRes.json();
       if (budgetData.status === 'success') {
         setBudgets(budgetData.budgets);
+        console.log('Budgets:', budgetData.budgets);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -56,7 +59,19 @@ const Reports = () => {
     let score = 0;
     let rating = '';
     
-    if (savingsRate >= 30) {
+    // Negative savings (spending more than earning)
+    if (savingsRate < -50) {
+      score = 0;
+      rating = 'Critical';
+    } else if (savingsRate < -25) {
+      score = 10;
+      rating = 'Danger';
+    } else if (savingsRate < 0) {
+      score = 25;
+      rating = 'Poor';
+    }
+    // Positive savings
+    else if (savingsRate >= 30) {
       score = 100;
       rating = 'Excellent';
     } else if (savingsRate >= 20) {
@@ -65,11 +80,12 @@ const Reports = () => {
     } else if (savingsRate >= 10) {
       score = 70;
       rating = 'Good';
-    } else if (savingsRate >= 0) {
-      score = 50;
+    } else if (savingsRate >= 5) {
+      score = 55;
       rating = 'Fair';
     } else {
-      score = 25;
+      // 0-5% savings
+      score = 40;
       rating = 'Poor';
     }
     
@@ -78,45 +94,85 @@ const Reports = () => {
 
   // Calculate Budget Adherence Score (0-100)
   const calculateBudgetScore = () => {
-    if (budgets.length === 0) {
-      return { score: 50, rating: 'N/A', adherence: 0 };
+    if (budgets.length === 0 || summary.total_income === 0) {
+      return { score: 50, rating: 'N/A', adherence: 0, withinBudget: 0, totalCategories: 0 };
     }
 
     let totalCategories = 0;
     let withinBudget = 0;
+    let totalOverspend = 0; // Track how much over budget
+    let totalBudgetAmount = 0;
 
     budgets.forEach(budget => {
       totalCategories++;
-      const spent = summary.expenses_by_category.find(c => c.category_id === budget.category_id)?.total || 0;
-      const budgetAmount = budget.amount;
+      
+      // Find actual spending for this category
+      const categoryExpense = summary.expenses_by_category.find(c => c.id === budget.category_id);
+      const spent = categoryExpense ? categoryExpense.total : 0;
+      
+      // Calculate budget amount from percentage of income
+      const budgetAmount = (budget.percentage / 100) * summary.total_income;
+      totalBudgetAmount += budgetAmount;
       
       if (spent <= budgetAmount) {
         withinBudget++;
+      } else {
+        // Track overspending
+        totalOverspend += (spent - budgetAmount);
       }
     });
 
-    const adherenceRate = (withinBudget / totalCategories) * 100;
+    if (totalCategories === 0) {
+      return { score: 50, rating: 'N/A', adherence: 0, withinBudget: 0, totalCategories: 0 };
+    }
+
+    // Calculate both metrics
+    const categorySuccessRate = (withinBudget / totalCategories) * 100;
+    const overspendPercentage = totalBudgetAmount > 0 ? (totalOverspend / totalBudgetAmount) * 100 : 0;
+    
+    // Score based on BOTH category success AND overspend severity
     let score = 0;
     let rating = '';
 
-    if (adherenceRate >= 90) {
-      score = 100;
-      rating = 'Excellent';
-    } else if (adherenceRate >= 75) {
-      score = 85;
-      rating = 'Great';
-    } else if (adherenceRate >= 60) {
-      score = 70;
-      rating = 'Good';
-    } else if (adherenceRate >= 40) {
-      score = 50;
+    // If massively overspending (>100% over budget total), score tanks
+    if (overspendPercentage > 100) {
+      score = 10;
+      rating = 'Critical';
+    } else if (overspendPercentage > 50) {
+      score = 25;
+      rating = 'Poor';
+    } else if (overspendPercentage > 25) {
+      score = 40;
       rating = 'Fair';
     } else {
-      score = 30;
-      rating = 'Poor';
+      // Normal scoring based on category success rate
+      if (categorySuccessRate >= 90) {
+        score = 100;
+        rating = 'Excellent';
+      } else if (categorySuccessRate >= 75) {
+        score = 85;
+        rating = 'Great';
+      } else if (categorySuccessRate >= 60) {
+        score = 70;
+        rating = 'Good';
+      } else if (categorySuccessRate >= 40) {
+        score = 50;
+        rating = 'Fair';
+      } else {
+        score = 30;
+        rating = 'Poor';
+      }
     }
 
-    return { score, rating, adherence: adherenceRate.toFixed(0), withinBudget, totalCategories };
+    return { 
+      score, 
+      rating, 
+      adherence: categorySuccessRate.toFixed(0), 
+      withinBudget, 
+      totalCategories,
+      overspendAmount: totalOverspend,
+      overspendPercentage: overspendPercentage.toFixed(0)
+    };
   };
 
   // Calculate Transaction Consistency Score (0-100)
@@ -156,8 +212,31 @@ const Reports = () => {
 
   // Calculate Spending Balance Score (0-100)
   const calculateBalanceScore = () => {
-    if (summary.expenses_by_category.length === 0) {
-      return { score: 50, rating: 'N/A' };
+    if (summary.expenses_by_category.length === 0 || summary.total_expenses === 0) {
+      return { score: 50, rating: 'N/A', maxCategory: 0, categories: 0 };
+    }
+
+    // Don't penalize if total spending is very low (under $100)
+    // Early in the month or just starting out, balance doesn't matter yet
+    if (summary.total_expenses < 100) {
+      return { 
+        score: 75, 
+        rating: 'Good', 
+        maxCategory: 0, 
+        categories: summary.expenses_by_category.length,
+        note: 'Not enough spending data yet'
+      };
+    }
+
+    // Only consider if there are multiple categories
+    if (summary.expenses_by_category.length === 1) {
+      return { 
+        score: 60, 
+        rating: 'Fair', 
+        maxCategory: 100, 
+        categories: 1,
+        note: 'Add expenses in other categories'
+      };
     }
 
     // Calculate how evenly distributed spending is across categories
@@ -165,27 +244,31 @@ const Reports = () => {
       (c.total / summary.total_expenses) * 100
     );
 
-    // Check if any category dominates (>60% of spending)
+    // Check if any category dominates
     const maxPercentage = Math.max(...categoryPercentages);
     
     let score = 0;
     let rating = '';
 
-    if (maxPercentage < 40) {
+    // More severe scoring for concentrated spending (when it matters)
+    if (maxPercentage >= 80) {
+      score = 10;
+      rating = 'Critical';
+    } else if (maxPercentage >= 70) {
+      score = 25;
+      rating = 'Poor';
+    } else if (maxPercentage >= 60) {
+      score = 40;
+      rating = 'Fair';
+    } else if (maxPercentage >= 50) {
+      score = 60;
+      rating = 'Good';
+    } else if (maxPercentage >= 40) {
+      score = 80;
+      rating = 'Great';
+    } else {
       score = 100;
       rating = 'Excellent';
-    } else if (maxPercentage < 50) {
-      score = 85;
-      rating = 'Great';
-    } else if (maxPercentage < 60) {
-      score = 70;
-      rating = 'Good';
-    } else if (maxPercentage < 75) {
-      score = 50;
-      rating = 'Fair';
-    } else {
-      score = 30;
-      rating = 'Poor';
     }
 
     return { score, rating, maxCategory: maxPercentage.toFixed(0), categories: summary.expenses_by_category.length };
@@ -200,8 +283,8 @@ const Reports = () => {
 
     // Weight the scores
     const weights = {
-      savings: 0.35,
-      budget: 0.30,
+      savings: 0.40,      // Increased from 0.35
+      budget: 0.25,       // Decreased from 0.30
       consistency: 0.20,
       balance: 0.15
     };
@@ -243,16 +326,19 @@ const Reports = () => {
         excellent: "Outstanding! You're saving 30%+ of your income. Consider investing your surplus or building an emergency fund.",
         great: "Great job! You're saving 20-30% of your income. Try to increase this slightly for even better financial security.",
         good: "You're saving 10-20% of your income, which is solid. Look for small ways to cut expenses and boost this rate.",
-        fair: "You're saving less than 10% of your income. Review your expenses and find areas where you can cut back.",
-        poor: "You're spending more than you earn. This is unsustainable. Review your budget immediately and cut non-essential expenses.",
+        fair: "You're saving 0-5% of your income. Review your expenses and find areas where you can cut back to reach 10%.",
+        poor: "You're spending more than you earn or barely breaking even. This is unsustainable. Cut non-essential expenses immediately.",
+        danger: "⚠️ ALERT: You're spending significantly more than you earn. Stop all discretionary spending NOW and create an emergency budget.",
+        critical: "🚨 CRITICAL: Your spending is far beyond your income. This is a financial emergency. Seek immediate help and stop all non-essential spending.",
         na: "Add income and expense transactions to get your savings score."
       },
       budget: {
         excellent: "Perfect! You're staying within budget on 90%+ of your categories. Keep up the disciplined approach!",
         great: "Great work! You're within budget on 75-90% of categories. Focus on the categories where you're overspending.",
         good: "You're within budget on 60-75% of categories. Identify problem areas and adjust spending or budgets accordingly.",
-        fair: "You're only within budget on 40-60% of categories. Review your budgets and make them more realistic or cut spending.",
-        poor: "You're exceeding budgets on most categories. Your budgets may be unrealistic or spending is out of control.",
+        fair: "You're only within budget on 40-60% of categories or moderately overspending. Review your budgets and spending patterns.",
+        poor: "You're significantly overspending across categories. Your budgets may be unrealistic or spending needs immediate attention.",
+        critical: "🚨 CRITICAL: You're spending 2x+ your total budget. This is unsustainable. Stop discretionary spending immediately and reassess your budget.",
         na: "Set up budgets for your spending categories to track your progress and improve financial discipline."
       },
       consistency: {
@@ -265,10 +351,11 @@ const Reports = () => {
       },
       balance: {
         excellent: "Excellent diversification! Your spending is well-balanced across categories with no single area dominating.",
-        great: "Good balance! No category takes up more than 50% of spending. This indicates healthy financial distribution.",
-        good: "Decent balance, but one category takes 50-60% of spending. Consider if this allocation aligns with your goals.",
-        fair: "One category dominates 60-75% of your spending. This concentration could be risky if that area experiences changes.",
-        poor: "Over 75% of spending is in one category. This is very concentrated and could indicate poor spending balance.",
+        great: "Good balance! No category takes up more than 40% of spending. This indicates healthy financial distribution.",
+        good: "Decent balance, but one category takes 40-50% of spending. Consider if this allocation aligns with your goals.",
+        fair: "One category dominates 50-60% of your spending. This concentration could be risky if that area experiences changes.",
+        poor: "Over 60-70% of spending is in one category. This is very concentrated and indicates poor spending balance.",
+        critical: "🚨 CRITICAL: Over 70% of spending is in ONE category. This extreme concentration is financially dangerous. Diversify immediately.",
         na: "Add transactions across different categories to get your spending balance score."
       }
     };
@@ -277,12 +364,33 @@ const Reports = () => {
     return advice[type][key] || advice[type].na;
   };
 
+  const getScoreBorderStyle = (score) => {
+    const color = getScoreColor(score);
+    let boxShadow = 'none';
+    
+    // Add glow effect for critical/poor scores
+    if (score < 15) {
+      boxShadow = `0 0 20px ${color}80, 0 4px 12px rgba(0, 0, 0, 0.3)`;
+    } else if (score < 40) {
+      boxShadow = `0 0 15px ${color}60, 0 4px 12px rgba(0, 0, 0, 0.3)`;
+    } else if (score < 60) {
+      boxShadow = `0 0 10px ${color}40`;
+    }
+    
+    return {
+      borderColor: color,
+      borderWidth: '2px',
+      boxShadow: boxShadow
+    };
+  };
+
   const getScoreColor = (score) => {
-    if (score >= 90) return '#10b981';
-    if (score >= 75) return '#34d399';
-    if (score >= 60) return '#fbbf24';
-    if (score >= 40) return '#f59e0b';
-    return '#ef4444';
+    if (score >= 90) return '#10b981';  // Green
+    if (score >= 75) return '#34d399';  // Light green
+    if (score >= 60) return '#fbbf24';  // Yellow
+    if (score >= 40) return '#f59e0b';  // Orange
+    if (score >= 15) return '#ef4444';  // Red
+    return '#dc2626';                    // Dark red (critical)
   };
 
   const formatCurrency = (amount) => {
@@ -354,13 +462,13 @@ const Reports = () => {
               <div className="breakdown-items">
                 <div className="breakdown-item">
                   <span className="breakdown-label">💰 Savings Rate</span>
-                  <span className="breakdown-calc">{savingsMetric.score} × 35%</span>
-                  <span className="breakdown-value">= {Math.round(savingsMetric.score * 0.35)}</span>
+                  <span className="breakdown-calc">{savingsMetric.score} × 40%</span>
+                  <span className="breakdown-value">= {Math.round(savingsMetric.score * 0.40)}</span>
                 </div>
                 <div className="breakdown-item">
                   <span className="breakdown-label">🎯 Budget Adherence</span>
-                  <span className="breakdown-calc">{budgetMetric.score} × 30%</span>
-                  <span className="breakdown-value">= {Math.round(budgetMetric.score * 0.30)}</span>
+                  <span className="breakdown-calc">{budgetMetric.score} × 25%</span>
+                  <span className="breakdown-value">= {Math.round(budgetMetric.score * 0.25)}</span>
                 </div>
                 <div className="breakdown-item">
                   <span className="breakdown-label">📅 Tracking Consistency</span>
@@ -388,7 +496,7 @@ const Reports = () => {
       {/* Individual Metrics */}
       <div className="metrics-grid">
         {/* Savings Rate */}
-        <div className="metric-card">
+        <div className="metric-card" style={getScoreBorderStyle(savingsMetric.score)}>
           <div className="metric-header">
             <div className="metric-icon">💰</div>
             <div className="metric-title-section">
@@ -431,7 +539,7 @@ const Reports = () => {
         </div>
 
         {/* Budget Adherence */}
-        <div className="metric-card">
+        <div className="metric-card" style={getScoreBorderStyle(budgetMetric.score)}>
           <div className="metric-header">
             <div className="metric-icon">🎯</div>
             <div className="metric-title-section">
@@ -460,6 +568,14 @@ const Reports = () => {
                 <span className="stat-label">Success Rate:</span>
                 <span className="stat-value">{budgetMetric.adherence}%</span>
               </div>
+              {budgetMetric.overspendAmount > 0 && (
+                <div className="stat-item">
+                  <span className="stat-label">Total Overspent:</span>
+                  <span className="stat-value" style={{ color: '#ef4444' }}>
+                    {formatCurrency(budgetMetric.overspendAmount)}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -470,7 +586,7 @@ const Reports = () => {
         </div>
 
         {/* Transaction Consistency */}
-        <div className="metric-card">
+        <div className="metric-card" style={getScoreBorderStyle(consistencyMetric.score)}>
           <div className="metric-header">
             <div className="metric-icon">📅</div>
             <div className="metric-title-section">
@@ -509,7 +625,7 @@ const Reports = () => {
         </div>
 
         {/* Spending Balance */}
-        <div className="metric-card">
+        <div className="metric-card" style={getScoreBorderStyle(balanceMetric.score)}>
           <div className="metric-header">
             <div className="metric-icon">⚖️</div>
             <div className="metric-title-section">
@@ -538,6 +654,13 @@ const Reports = () => {
                 <span className="stat-label">Largest Category:</span>
                 <span className="stat-value">{balanceMetric.maxCategory}%</span>
               </div>
+              {balanceMetric.note && (
+                <div className="stat-item">
+                  <span className="stat-label" style={{ color: '#fbbf24', fontSize: '13px' }}>
+                    ℹ️ {balanceMetric.note}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 

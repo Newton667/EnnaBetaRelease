@@ -272,7 +272,7 @@
   background: rgba(52, 211, 153, 0.05);
   border-left: 3px solid #34d399;
   border-radius: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .date-group-title {
@@ -300,9 +300,10 @@
 }
 
 .transaction-item:hover {
-  transform: translateX(4px);
+  transform: translateY(-2px);
   border-color: rgba(52, 211, 153, 0.4);
   background: rgba(30, 30, 30, 0.8);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 .transaction-item.income {
@@ -351,6 +352,7 @@
   padding: 4px 10px;
   border-radius: 6px;
   font-weight: 500;
+  font-size: 13px;
 }
 
 .transaction-date {
