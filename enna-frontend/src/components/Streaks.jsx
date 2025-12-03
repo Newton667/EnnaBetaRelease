@@ -19,26 +19,40 @@ const Streaks = () => {
     try {
       setIsLoading(true);
       
-      // Fetch streak data
-      const streakRes = await fetch('http://localhost:5000/api/streaks');
+      // Check if date override is active
+      const override = localStorage.getItem('enna_datetime_override') === 'true';
+      let queryParams = '';
+      
+      if (override) {
+        const overrideDate = localStorage.getItem('enna_override_date');
+        if (overrideDate) {
+          queryParams = `?login_date=${overrideDate}&current_date=${overrideDate}`;
+        }
+      }
+      
+      // Fetch streak data (this will automatically record today's login)
+      const streakRes = await fetch(`http://localhost:5000/api/streaks${queryParams}`);
       const streakData = await streakRes.json();
       if (streakData.status === 'success') {
         setStreakData(streakData.streaks);
       }
 
-      // Fetch all transactions to build calendar
+      // Fetch login days for calendar
+      const loginRes = await fetch('http://localhost:5000/api/login-days');
+      const loginData = await loginRes.json();
+      if (loginData.status === 'success') {
+        // Build set of login days
+        const days = new Set(loginData.login_days);
+        setActiveDays(days);
+        
+        console.log('Login days:', Array.from(days).sort());
+      }
+      
+      // Still fetch transactions for "This Month" stat
       const transRes = await fetch('http://localhost:5000/api/transactions?limit=1000');
       const transData = await transRes.json();
       if (transData.status === 'success') {
         setTransactions(transData.transactions);
-        
-        // Build set of active days
-        const days = new Set();
-        transData.transactions.forEach(t => {
-          const date = t.date.split('T')[0];
-          days.add(date);
-        });
-        setActiveDays(days);
       }
     } catch (error) {
       console.error('Failed to fetch streak data:', error);
@@ -148,7 +162,7 @@ const Streaks = () => {
       <div className="streaks-header">
         <h1>🔥 Streak Tracker</h1>
         <p className="streaks-subtitle">
-          Keep the fire burning! Log transactions daily to build your streak.
+          Keep the fire burning! Log in daily to build your streak.
         </p>
       </div>
 
@@ -198,13 +212,13 @@ const Streaks = () => {
           <div className="info-item">
             <span className="info-icon">✅</span>
             <div className="info-text">
-              <strong>Keep Your Streak:</strong> Log at least one transaction today or yesterday
+              <strong>Keep Your Streak:</strong> Log into Enna today or yesterday
             </div>
           </div>
           <div className="info-item">
             <span className="info-icon">❌</span>
             <div className="info-text">
-              <strong>Break Your Streak:</strong> Miss a day with no transactions
+              <strong>Break Your Streak:</strong> Don't log in for 2+ days
             </div>
           </div>
           <div className="info-item">
@@ -216,7 +230,7 @@ const Streaks = () => {
           <div className="info-item">
             <span className="info-icon">🔥</span>
             <div className="info-text">
-              <strong>Active Days:</strong> Days with 🔥 mean you logged transactions
+              <strong>Active Days:</strong> Days with 🔥 mean you logged into Enna
             </div>
           </div>
         </div>

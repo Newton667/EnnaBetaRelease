@@ -9,9 +9,17 @@ function Settings() {
   const [deleteConfirmSlider, setDeleteConfirmSlider] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
+  
+  // Developer Settings
+  const [showDevSettings, setShowDevSettings] = useState(false);
+  const [dateTimeOverride, setDateTimeOverride] = useState(false);
+  const [overrideDate, setOverrideDate] = useState('');
+  const [overrideTime, setOverrideTime] = useState('');
+  const [devMessage, setDevMessage] = useState('');
 
   useEffect(() => {
     fetchUserName();
+    loadDevSettings();
   }, []);
 
   const fetchUserName = async () => {
@@ -87,6 +95,101 @@ function Settings() {
   const handleCloseDeleteModal = () => {
     setShowDeleteModal(false);
     setDeleteConfirmSlider(0);
+  };
+
+  // Developer Settings Functions
+  const loadDevSettings = () => {
+    const devMode = localStorage.getItem('enna_dev_mode') === 'true';
+    setShowDevSettings(devMode);
+    
+    const override = localStorage.getItem('enna_datetime_override') === 'true';
+    setDateTimeOverride(override);
+    
+    if (override) {
+      const savedDate = localStorage.getItem('enna_override_date');
+      const savedTime = localStorage.getItem('enna_override_time');
+      if (savedDate) setOverrideDate(savedDate);
+      if (savedTime) setOverrideTime(savedTime);
+    } else {
+      // Set to current date/time
+      const now = new Date();
+      setOverrideDate(now.toISOString().split('T')[0]);
+      setOverrideTime(now.toTimeString().slice(0, 5));
+    }
+  };
+
+  const handleToggleDevSettings = () => {
+    const newValue = !showDevSettings;
+    setShowDevSettings(newValue);
+    localStorage.setItem('enna_dev_mode', newValue.toString());
+    
+    if (!newValue) {
+      // When disabling dev settings, also disable overrides
+      handleDisableDateTimeOverride();
+    }
+  };
+
+  const handleToggleDateTimeOverride = () => {
+    const newValue = !dateTimeOverride;
+    setDateTimeOverride(newValue);
+    
+    if (newValue) {
+      // Enable override - save current values
+      const now = new Date();
+      const currentDate = overrideDate || now.toISOString().split('T')[0];
+      const currentTime = overrideTime || now.toTimeString().slice(0, 5);
+      
+      setOverrideDate(currentDate);
+      setOverrideTime(currentTime);
+      
+      localStorage.setItem('enna_datetime_override', 'true');
+      localStorage.setItem('enna_override_date', currentDate);
+      localStorage.setItem('enna_override_time', currentTime);
+      
+      setDevMessage('Date/Time override enabled! ✓');
+    } else {
+      handleDisableDateTimeOverride();
+    }
+    
+    setTimeout(() => setDevMessage(''), 3000);
+  };
+
+  const handleDisableDateTimeOverride = () => {
+    setDateTimeOverride(false);
+    localStorage.setItem('enna_datetime_override', 'false');
+    localStorage.removeItem('enna_override_date');
+    localStorage.removeItem('enna_override_time');
+    setDevMessage('Date/Time override disabled - using system time ✓');
+  };
+
+  const handleSaveDateTimeOverride = () => {
+    if (!overrideDate || !overrideTime) {
+      setDevMessage('Please set both date and time');
+      setTimeout(() => setDevMessage(''), 3000);
+      return;
+    }
+    
+    localStorage.setItem('enna_override_date', overrideDate);
+    localStorage.setItem('enna_override_time', overrideTime);
+    
+    setDevMessage('Override date/time saved! Refresh the page to apply. ✓');
+    setTimeout(() => setDevMessage(''), 3000);
+  };
+
+  const handleResetToNow = () => {
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0];
+    const currentTime = now.toTimeString().slice(0, 5);
+    
+    setOverrideDate(currentDate);
+    setOverrideTime(currentTime);
+    
+    if (dateTimeOverride) {
+      localStorage.setItem('enna_override_date', currentDate);
+      localStorage.setItem('enna_override_time', currentTime);
+      setDevMessage('Reset to current time! Refresh to apply. ✓');
+      setTimeout(() => setDevMessage(''), 3000);
+    }
   };
 
   return (
@@ -236,6 +339,104 @@ function Settings() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Developer Settings Toggle */}
+      <div className="dev-toggle-container">
+        <label className="dev-toggle-label">
+          <input
+            type="checkbox"
+            checked={showDevSettings}
+            onChange={handleToggleDevSettings}
+            className="dev-checkbox"
+          />
+          <span className="dev-toggle-text">
+            🔧 Enable Developer Settings
+          </span>
+        </label>
+      </div>
+
+      {/* Developer Settings Section */}
+      {showDevSettings && (
+        <div className="settings-section dev-settings">
+          <div className="section-header">
+            <h2>🔧 Developer Settings</h2>
+            <p>Advanced options for testing and debugging</p>
+          </div>
+
+          {/* Date/Time Override */}
+          <div className="dev-card">
+            <div className="dev-card-header">
+              <div className="dev-card-title">
+                <h3>🕐 Date/Time Override</h3>
+                <p>Override system date and time for testing streaks and time-based features</p>
+              </div>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={dateTimeOverride}
+                  onChange={handleToggleDateTimeOverride}
+                />
+                <span className="toggle-slider"></span>
+              </label>
+            </div>
+
+            {dateTimeOverride && (
+              <div className="dev-card-content">
+                <div className="datetime-inputs">
+                  <div className="input-group">
+                    <label>Date</label>
+                    <input
+                      type="date"
+                      value={overrideDate}
+                      onChange={(e) => setOverrideDate(e.target.value)}
+                      className="datetime-input"
+                    />
+                  </div>
+                  <div className="input-group">
+                    <label>Time</label>
+                    <input
+                      type="time"
+                      value={overrideTime}
+                      onChange={(e) => setOverrideTime(e.target.value)}
+                      className="datetime-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="dev-actions">
+                  <button 
+                    className="btn-dev-action"
+                    onClick={handleResetToNow}
+                  >
+                    🔄 Reset to Now
+                  </button>
+                  <button 
+                    className="btn-dev-save"
+                    onClick={handleSaveDateTimeOverride}
+                  >
+                    💾 Save Override
+                  </button>
+                </div>
+
+                <div className="dev-info-box">
+                  <div className="info-icon">ℹ️</div>
+                  <div className="info-text">
+                    <strong>How it works:</strong> When enabled, the Clock component and any time-based features will use your override date/time instead of the system time. Perfect for testing streaks without waiting for days to pass!
+                    <br /><br />
+                    <strong>Note:</strong> You'll need to refresh the page after saving for changes to take effect.
+                  </div>
+                </div>
+
+                {devMessage && (
+                  <div className={`dev-message ${devMessage.includes('✓') ? 'success' : 'error'}`}>
+                    {devMessage}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

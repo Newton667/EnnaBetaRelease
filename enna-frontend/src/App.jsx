@@ -36,7 +36,18 @@ function App() {
   // Fetch streak data from database
   const fetchStreaks = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/streaks');
+      // Check if date override is active
+      const override = localStorage.getItem('enna_datetime_override') === 'true';
+      let queryParams = '';
+      
+      if (override) {
+        const overrideDate = localStorage.getItem('enna_override_date');
+        if (overrideDate) {
+          queryParams = `?login_date=${overrideDate}&current_date=${overrideDate}`;
+        }
+      }
+      
+      const response = await fetch(`http://localhost:5000/api/streaks${queryParams}`);
       const data = await response.json();
       
       if (data.status === 'success') {

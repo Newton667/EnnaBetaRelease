@@ -10,6 +10,16 @@ class EnnaDatabase:
         self.connection = None
         self.init_database()
     
+    def _get_current_date(self):
+        """Get current date, respecting frontend override if present"""
+        # This would need to be passed from frontend, or we check a shared config
+        # For now, return system date - frontend will need to pass override date
+        return datetime.now().strftime('%Y-%m-%d')
+    
+    def _get_current_datetime(self):
+        """Get current datetime"""
+        return datetime.now()
+    
     def get_connection(self):
         """Get database connection"""
         if self.connection is None:
@@ -87,6 +97,15 @@ class EnnaDatabase:
                 user_name TEXT DEFAULT 'Friend',
                 longest_streak INTEGER DEFAULT 0,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Login tracking table for streaks
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS login_days (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                login_date DATE NOT NULL UNIQUE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
         
@@ -296,16 +315,35 @@ class EnnaDatabase:
     
     # ============= STREAK METHODS =============
     
-    def get_current_streak(self):
-        """Calculate current streak of consecutive days with transactions"""
+    def record_login(self, login_date=None):
+        """Record that user logged in today (for streak tracking)"""
+        from datetime import datetime
         conn = self.get_connection()
         cursor = conn.cursor()
         
-        # Get all unique transaction dates, ordered by date descending
+        # Use provided date or current date
+        if login_date is None:
+            login_date = datetime.now().strftime('%Y-%m-%d')
+        
+        # Insert today's login (ignore if already exists)
         cursor.execute('''
-            SELECT DISTINCT date(date) as trans_date
-            FROM transactions
-            ORDER BY date(date) DESC
+            INSERT OR IGNORE INTO login_days (login_date)
+            VALUES (?)
+        ''', (login_date,))
+        
+        conn.commit()
+        return True
+    
+    def get_current_streak(self, current_date=None):
+        """Calculate current streak of consecutive login days"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Get all unique login dates, ordered by date descending
+        cursor.execute('''
+            SELECT DISTINCT date(login_date) as login_date
+            FROM login_days
+            ORDER BY date(login_date) DESC
         ''')
         
         dates = [row[0] for row in cursor.fetchall()]
@@ -313,31 +351,34 @@ class EnnaDatabase:
         if not dates:
             return 0
         
-        # Get today's date in local timezone
+        # Get today's date (or override date)
         from datetime import datetime, timedelta
-        today = datetime.now().date()
+        if current_date:
+            today = datetime.strptime(current_date, '%Y-%m-%d').date()
+        else:
+            today = datetime.now().date()
         
         # Convert string dates to date objects
         date_objects = [datetime.strptime(d, '%Y-%m-%d').date() for d in dates]
         
         # Check if streak is still active
-        # Streak is active if there's a transaction today OR yesterday
+        # Streak is active if user logged in today OR yesterday
         most_recent = date_objects[0]
         days_since_last = (today - most_recent).days
         
         if days_since_last > 1:
-            # Streak is broken - no transaction yesterday or today
+            # Streak is broken - no login yesterday or today
             return 0
         
         # Count consecutive days
         streak = 0
         expected_date = most_recent
         
-        for trans_date in date_objects:
-            if trans_date == expected_date:
+        for login_date in date_objects:
+            if login_date == expected_date:
                 streak += 1
-                expected_date = trans_date - timedelta(days=1)
-            elif trans_date == expected_date + timedelta(days=1):
+                expected_date = login_date - timedelta(days=1)
+            elif login_date == expected_date + timedelta(days=1):
                 # Skip if we're counting backwards and find today again
                 continue
             else:
@@ -370,9 +411,12 @@ class EnnaDatabase:
             return True
         return False
     
-    def get_streak_data(self):
-        """Get comprehensive streak data"""
-        current_streak = self.get_current_streak()
+    def get_streak_data(self, login_date=None, current_date=None):
+        """Get comprehensive streak data and record today's login"""
+        # Record today's login automatically
+        self.record_login(login_date)
+        
+        current_streak = self.get_current_streak(current_date)
         longest_streak = self.get_longest_streak()
         
         # Update longest streak if current is higher
@@ -383,6 +427,13 @@ class EnnaDatabase:
             'current_streak': current_streak,
             'longest_streak': longest_streak
         }
+    
+    def get_login_days(self):
+        """Get all login days for calendar display"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT login_date FROM login_days ORDER BY login_date DESC')
+        return [row[0] for row in cursor.fetchall()]
     
     # ============= USER METHODS =============
     
@@ -416,6 +467,9 @@ class EnnaDatabase:
         
         # Delete all budget allocations
         cursor.execute('DELETE FROM budget_allocations')
+        
+        # Delete all login days (streak data)
+        cursor.execute('DELETE FROM login_days')
         
         # Reset user stats (keep structure, reset data)
         cursor.execute('''

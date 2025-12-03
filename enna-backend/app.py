@@ -241,10 +241,26 @@ def get_budget():
 def get_streaks():
     """Get current and longest streak data"""
     try:
-        streak_data = db.get_streak_data()
+        # Get optional date parameters from frontend (for dev override)
+        login_date = request.args.get('login_date')  # Date to record login
+        current_date = request.args.get('current_date')  # Date to calculate from
+        
+        streak_data = db.get_streak_data(login_date, current_date)
         return jsonify({
             'status': 'success',
             'streaks': streak_data
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/login-days', methods=['GET'])
+def get_login_days():
+    """Get all login days for calendar display"""
+    try:
+        login_days = db.get_login_days()
+        return jsonify({
+            'status': 'success',
+            'login_days': login_days
         })
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
