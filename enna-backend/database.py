@@ -109,6 +109,25 @@ class EnnaDatabase:
             )
         ''')
         
+        # Monthly archives table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS monthly_archives (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                month_year TEXT NOT NULL UNIQUE,
+                total_income REAL DEFAULT 0,
+                total_expenses REAL DEFAULT 0,
+                net REAL DEFAULT 0,
+                financial_health_score INTEGER DEFAULT 0,
+                savings_score INTEGER DEFAULT 0,
+                budget_score INTEGER DEFAULT 0,
+                consistency_score INTEGER DEFAULT 0,
+                balance_score INTEGER DEFAULT 0,
+                transaction_count INTEGER DEFAULT 0,
+                transactions_json TEXT,
+                archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         # Initialize user_stats if empty
         cursor.execute('SELECT COUNT(*) FROM user_stats')
         if cursor.fetchone()[0] == 0:
@@ -471,6 +490,9 @@ class EnnaDatabase:
         # Delete all login days (streak data)
         cursor.execute('DELETE FROM login_days')
         
+        # Delete all monthly archives
+        cursor.execute('DELETE FROM monthly_archives')
+        
         # Reset user stats (keep structure, reset data)
         cursor.execute('''
             UPDATE user_stats 
@@ -480,6 +502,115 @@ class EnnaDatabase:
         
         conn.commit()
         return True
+    
+    # ============= MONTHLY ARCHIVE METHODS =============
+    
+    def create_monthly_archive(self, month_year, summary_data, scores, transactions_json=None):
+        """Create a monthly archive snapshot
+        
+        Args:
+            month_year: String in format 'YYYY-MM' (e.g. '2024-11')
+            summary_data: Dict with {total_income, total_expenses, net, transaction_count}
+            scores: Dict with {overall, savings, budget, consistency, balance}
+            transactions_json: JSON string of transactions list (optional)
+        """
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT OR REPLACE INTO monthly_archives 
+            (month_year, total_income, total_expenses, net, financial_health_score,
+             savings_score, budget_score, consistency_score, balance_score, transaction_count, transactions_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            month_year,
+            summary_data.get('total_income', 0),
+            summary_data.get('total_expenses', 0),
+            summary_data.get('net', 0),
+            scores.get('overall', 0),
+            scores.get('savings', 0),
+            scores.get('budget', 0),
+            scores.get('consistency', 0),
+            scores.get('balance', 0),
+            summary_data.get('transaction_count', 0),
+            transactions_json
+        ))
+        
+        conn.commit()
+        return cursor.lastrowid
+    
+    def get_monthly_archives(self, limit=12):
+        """Get monthly archives sorted by date (most recent first)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM monthly_archives 
+            ORDER BY month_year DESC 
+            LIMIT ?
+        ''', (limit,))
+        
+        archives = []
+        for row in cursor.fetchall():
+            archives.append(dict(row))
+        
+        return archives
+    
+    def get_archive_by_month(self, month_year):
+        """Get specific month archive"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT * FROM monthly_archives 
+            WHERE month_year = ?
+        ''', (month_year,))
+        
+        row = cursor.fetchone()
+        return dict(row) if row else None
+    
+    def check_if_current_month_archived(self):
+        """Check if current month has been archived"""
+        current_month = datetime.now().strftime('%Y-%m')
+        return self.get_archive_by_month(current_month) is not None
+    
+    def get_monthly_spending_chart_data(self, months=6):
+        """Get monthly spending data for chart (last N months)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            SELECT month_year, total_income, total_expenses, net
+            FROM monthly_archives 
+            ORDER BY month_year DESC 
+            LIMIT ?
+        ''', (months,))
+        
+        data = []
+        for row in cursor.fetchall():
+            data.append(dict(row))
+        
+        # Reverse to show oldest to newest
+        return list(reversed(data))
+    
+    def clear_current_month_transactions(self):
+        """Clear all transactions from the current month (used after archiving)"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Get current month start date
+        now = datetime.now()
+        month_start = f"{now.year}-{now.month:02d}-01"
+        
+        # Delete all transactions from current month
+        cursor.execute('''
+            DELETE FROM transactions 
+            WHERE date >= ?
+        ''', (month_start,))
+        
+        deleted_count = cursor.rowcount
+        conn.commit()
+        return deleted_count
     
     def close(self):
         """Close database connection"""

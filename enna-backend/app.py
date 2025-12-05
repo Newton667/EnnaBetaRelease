@@ -320,6 +320,98 @@ def set_user_name():
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+# ============= ARCHIVE ENDPOINTS =============
+
+@app.route('/api/archives', methods=['GET'])
+def get_archives():
+    """Get all monthly archives"""
+    try:
+        limit = int(request.args.get('limit', 12))
+        archives = db.get_monthly_archives(limit)
+        return jsonify({
+            'status': 'success',
+            'archives': archives
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/archives/<month_year>', methods=['GET'])
+def get_archive(month_year):
+    """Get specific month archive"""
+    try:
+        archive = db.get_archive_by_month(month_year)
+        if archive:
+            return jsonify({
+                'status': 'success',
+                'archive': archive
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Archive not found'
+            }), 404
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/archives', methods=['POST'])
+def create_archive():
+    """Create monthly archive"""
+    try:
+        data = request.json
+        
+        if 'month_year' not in data or 'summary_data' not in data or 'scores' not in data:
+            return jsonify({
+                'status': 'error',
+                'message': 'Missing required fields: month_year, summary_data, scores'
+            }), 400
+        
+        # Get transactions JSON if provided
+        transactions_json = data.get('transactions_json')
+        
+        archive_id = db.create_monthly_archive(
+            month_year=data['month_year'],
+            summary_data=data['summary_data'],
+            scores=data['scores'],
+            transactions_json=transactions_json
+        )
+        
+        # Clear current month's transactions after archiving
+        cleared_count = db.clear_current_month_transactions()
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Archive created successfully',
+            'archive_id': archive_id,
+            'transactions_cleared': cleared_count
+        }), 201
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/archives/check-current', methods=['GET'])
+def check_current_month_archived():
+    """Check if current month has been archived"""
+    try:
+        is_archived = db.check_if_current_month_archived()
+        return jsonify({
+            'status': 'success',
+            'is_archived': is_archived
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/archives/monthly-spending', methods=['GET'])
+def get_monthly_spending_chart():
+    """Get monthly spending data for charts"""
+    try:
+        months = int(request.args.get('months', 6))
+        data = db.get_monthly_spending_chart_data(months)
+        return jsonify({
+            'status': 'success',
+            'data': data
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/api/database/reset', methods=['POST'])
 def reset_database():
     """Reset all data in the database"""

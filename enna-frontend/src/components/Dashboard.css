@@ -43,6 +43,66 @@
   margin-bottom: 30px;
 }
 
+/* Archive Prompt */
+.archive-prompt {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+  border: 2px solid rgba(52, 211, 153, 0.3);
+  border-radius: 16px;
+  padding: 30px;
+  margin-bottom: 30px;
+  text-align: center;
+  animation: slideDown 0.5s ease;
+  box-shadow: 0 4px 15px rgba(52, 211, 153, 0.2);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.archive-prompt h3 {
+  color: #34d399;
+  font-size: 24px;
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+.archive-prompt p {
+  color: #d0d0d0;
+  font-size: 16px;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.btn-archive {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(52, 211, 153, 0.3);
+}
+
+.btn-archive:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 211, 153, 0.4);
+}
+
+.btn-archive:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .btn-add {
   background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
   color: #1a1a1a;

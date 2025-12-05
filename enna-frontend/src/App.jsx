@@ -7,6 +7,7 @@ import Transactions from './components/Transactions';
 import Settings from './components/Settings';
 import Tutorial from './components/Tutorial';
 import Reports from './components/Reports';
+import Archives from './components/Archives';
 import Clock from './components/Clock';
 import Calculator from './components/Calculator';
 import './App.css';
@@ -122,6 +123,8 @@ function App() {
         return <div className="view-placeholder">🏷️ Categories view coming soon!</div>;
       case 'reports':
         return <Reports />;
+      case 'archives':
+        return <Archives />;
       case 'streaks':
         return <Streaks />;
       case 'settings':

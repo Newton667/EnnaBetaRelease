@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './Reports.css';
 
 const Reports = () => {
@@ -10,6 +11,7 @@ const Reports = () => {
   });
   const [transactions, setTransactions] = useState([]);
   const [budgets, setBudgets] = useState([]);
+  const [monthlySpendingData, setMonthlySpendingData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -42,6 +44,19 @@ const Reports = () => {
       if (budgetData.status === 'success') {
         setBudgets(budgetData.budgets);
         console.log('Budgets:', budgetData.budgets);
+      }
+
+      // Fetch monthly spending chart data
+      const spendingRes = await fetch('http://localhost:5000/api/archives/monthly-spending?months=6');
+      const spendingData = await spendingRes.json();
+      if (spendingData.status === 'success') {
+        const formatted = spendingData.data.map(month => ({
+          month: new Date(month.month_year + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          income: month.total_income,
+          expenses: month.total_expenses,
+          net: month.net
+        }));
+        setMonthlySpendingData(formatted);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -492,6 +507,67 @@ const Reports = () => {
           </div>
         </div>
       </div>
+
+      {/* Monthly Spending Trend Chart */}
+      {monthlySpendingData.length > 0 && (
+        <div className="monthly-chart-card">
+          <h2>📈 Monthly Spending Trends</h2>
+          <p className="chart-subtitle">Last 6 months of income, expenses, and net savings</p>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={monthlySpendingData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(52, 211, 153, 0.1)" />
+              <XAxis 
+                dataKey="month" 
+                stroke="#a0a0a0"
+                style={{ fontSize: '14px' }}
+              />
+              <YAxis 
+                stroke="#a0a0a0"
+                style={{ fontSize: '14px' }}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(20, 20, 20, 0.95)', 
+                  border: '1px solid rgba(52, 211, 153, 0.3)',
+                  borderRadius: '8px'
+                }}
+                labelStyle={{ color: '#34d399' }}
+                itemStyle={{ color: '#ffffff' }}
+              />
+              <Legend 
+                wrapperStyle={{ color: '#a0a0a0' }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="income" 
+                stroke="#10b981" 
+                strokeWidth={3}
+                name="Income"
+                dot={{ fill: '#10b981', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="expenses" 
+                stroke="#ef4444" 
+                strokeWidth={3}
+                name="Expenses"
+                dot={{ fill: '#ef4444', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="net" 
+                stroke="#34d399" 
+                strokeWidth={3}
+                name="Net Savings"
+                dot={{ fill: '#34d399', r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Individual Metrics */}
       <div className="metrics-grid">
