@@ -43,16 +43,15 @@
   margin-bottom: 30px;
 }
 
-/* Archive Prompt */
-.archive-prompt {
+/* Archive Notification */
+.archive-notification {
   background: linear-gradient(135deg, rgba(52, 211, 153, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
   border: 2px solid rgba(52, 211, 153, 0.3);
-  border-radius: 16px;
-  padding: 30px;
+  border-left: 4px solid #34d399;
+  border-radius: 12px;
+  padding: 20px;
   margin-bottom: 30px;
-  text-align: center;
   animation: slideDown 0.5s ease;
-  box-shadow: 0 4px 15px rgba(52, 211, 153, 0.2);
 }
 
 @keyframes slideDown {
@@ -66,41 +65,50 @@
   }
 }
 
-.archive-prompt h3 {
-  color: #34d399;
-  font-size: 24px;
-  margin: 0 0 10px 0;
-  font-weight: 700;
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
-.archive-prompt p {
+.notification-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.notification-text {
+  flex: 1;
+}
+
+.notification-text h3 {
+  color: #34d399;
+  font-size: 18px;
+  margin: 0 0 6px 0;
+  font-weight: 600;
+}
+
+.notification-text p {
   color: #d0d0d0;
-  font-size: 16px;
-  margin: 0 0 20px 0;
+  font-size: 14px;
+  margin: 0;
   line-height: 1.5;
 }
 
-.btn-archive {
-  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
-  color: #ffffff;
+.btn-dismiss {
+  background: transparent;
   border: none;
-  border-radius: 12px;
-  padding: 14px 32px;
-  font-size: 16px;
-  font-weight: 600;
+  color: #a0a0a0;
+  font-size: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(52, 211, 153, 0.3);
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.btn-archive:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(52, 211, 153, 0.4);
-}
-
-.btn-archive:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.btn-dismiss:hover {
+  color: #ffffff;
+  background: rgba(160, 160, 160, 0.1);
 }
 
 .btn-add {

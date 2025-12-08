@@ -365,18 +365,28 @@ def create_archive():
                 'message': 'Missing required fields: month_year, summary_data, scores'
             }), 400
         
-        # Get transactions JSON if provided
+        # Get transactions JSON, date_range, and name if provided
         transactions_json = data.get('transactions_json')
+        date_range = data.get('date_range')
+        name = data.get('name')
         
         archive_id = db.create_monthly_archive(
             month_year=data['month_year'],
             summary_data=data['summary_data'],
             scores=data['scores'],
-            transactions_json=transactions_json
+            transactions_json=transactions_json,
+            date_range=date_range,
+            name=name
         )
         
-        # Clear current month's transactions after archiving
-        cleared_count = db.clear_current_month_transactions()
+        # Clear transactions in the archived date range
+        if date_range:
+            cleared_count = db.clear_transactions_in_range(
+                date_range.get('start'),
+                date_range.get('end')
+            )
+        else:
+            cleared_count = 0
         
         return jsonify({
             'status': 'success',
@@ -408,6 +418,45 @@ def get_monthly_spending_chart():
         return jsonify({
             'status': 'success',
             'data': data
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/archives/<int:archive_id>/rename', methods=['PUT'])
+def rename_archive(archive_id):
+    """Rename an archive"""
+    try:
+        data = request.json
+        
+        if 'name' not in data:
+            return jsonify({
+                'status': 'error',
+                'message': 'Missing required field: name'
+            }), 400
+        
+        success = db.update_archive_name(archive_id, data['name'])
+        
+        if success:
+            return jsonify({
+                'status': 'success',
+                'message': 'Archive renamed successfully'
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Archive not found'
+            }), 404
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/archives/next-start-date', methods=['GET'])
+def get_next_archive_start_date():
+    """Get the start date for the next archive"""
+    try:
+        start_date = db.get_next_archive_start_date()
+        return jsonify({
+            'status': 'success',
+            'start_date': start_date
         })
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500

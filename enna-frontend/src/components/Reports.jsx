@@ -50,12 +50,22 @@ const Reports = () => {
       const spendingRes = await fetch('http://localhost:5000/api/archives/monthly-spending?months=6');
       const spendingData = await spendingRes.json();
       if (spendingData.status === 'success') {
-        const formatted = spendingData.data.map(month => ({
-          month: new Date(month.month_year + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-          income: month.total_income,
-          expenses: month.total_expenses,
-          net: month.net
-        }));
+        const formatted = spendingData.data.map(month => {
+          // Use archive name if available, otherwise format from month_year
+          let displayName;
+          if (month.name) {
+            displayName = month.name;
+          } else {
+            displayName = new Date(month.month_year + '-01').toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+          }
+          
+          return {
+            month: displayName,
+            income: month.total_income,
+            expenses: month.total_expenses,
+            net: month.net
+          };
+        });
         setMonthlySpendingData(formatted);
       }
     } catch (error) {

@@ -9,6 +9,7 @@ class EnnaDatabase:
         self.password = password
         self.connection = None
         self.init_database()
+        self._check_schema_updates()
     
     def _get_current_date(self):
         """Get current date, respecting frontend override if present"""
@@ -26,6 +27,33 @@ class EnnaDatabase:
             self.connection = sqlite3.connect(self.db_path, check_same_thread=False)
             self.connection.row_factory = sqlite3.Row  # Return rows as dictionaries
         return self.connection
+    
+    def _check_schema_updates(self):
+        """Check and update schema for existing databases"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        try:
+            # NEW: Check for 'name' and other new columns in monthly_archives
+            cursor.execute("PRAGMA table_info(monthly_archives)")
+            columns = [row[1] for row in cursor.fetchall()]
+            
+            if 'name' not in columns:
+                print("ℹ️ Migrating database: Adding 'name' column to archives")
+                cursor.execute('ALTER TABLE monthly_archives ADD COLUMN name TEXT')
+            if 'transactions_json' not in columns:
+                cursor.execute('ALTER TABLE monthly_archives ADD COLUMN transactions_json TEXT')
+            if 'date_range_start' not in columns:
+                cursor.execute('ALTER TABLE monthly_archives ADD COLUMN date_range_start TEXT')
+            if 'date_range_end' not in columns:
+                cursor.execute('ALTER TABLE monthly_archives ADD COLUMN date_range_end TEXT')
+                
+            # Check for user_name in user_stats
+            cursor.execute("PRAGMA table_info(user_stats)")
+            if 'user_name' not in [row[1] for row in cursor.fetchall()]:
+                cursor.execute('ALTER TABLE user_stats ADD COLUMN user_name TEXT DEFAULT "Friend"')
+            conn.commit()
+        except Exception as e:
+            print(f"Schema update error: {e}")
     
     def init_database(self):
         """Initialize database with tables"""
@@ -114,6 +142,7 @@ class EnnaDatabase:
             CREATE TABLE IF NOT EXISTS monthly_archives (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 month_year TEXT NOT NULL UNIQUE,
+                name TEXT,
                 total_income REAL DEFAULT 0,
                 total_expenses REAL DEFAULT 0,
                 net REAL DEFAULT 0,
@@ -124,6 +153,8 @@ class EnnaDatabase:
                 balance_score INTEGER DEFAULT 0,
                 transaction_count INTEGER DEFAULT 0,
                 transactions_json TEXT,
+                date_range_start TEXT,
+                date_range_end TEXT,
                 archived_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -157,6 +188,8 @@ class EnnaDatabase:
                 'INSERT INTO categories (name, color, icon) VALUES (?, ?, ?)',
                 default_categories
             )
+
+            
         
         conn.commit()
         print("✅ Database initialized successfully!")
@@ -477,20 +510,44 @@ class EnnaDatabase:
         return True
     
     def reset_database(self):
-        """Reset all data in the database (DANGER!)"""
+        """Reset all data in the database and fix schema issues"""
         conn = self.get_connection()
         cursor = conn.cursor()
         
-        # Delete all transactions
+        # First, fix any missing columns before clearing data
+        try:
+            # Check if transactions_json column exists in monthly_archives
+            cursor.execute("PRAGMA table_info(monthly_archives)")
+            columns = [row[1] for row in cursor.fetchall()]
+            
+            if 'transactions_json' not in columns:
+                cursor.execute('''
+                    ALTER TABLE monthly_archives 
+                    ADD COLUMN transactions_json TEXT
+                ''')
+                conn.commit()
+            
+            if 'date_range_start' not in columns:
+                cursor.execute('''
+                    ALTER TABLE monthly_archives 
+                    ADD COLUMN date_range_start TEXT
+                ''')
+                conn.commit()
+            
+            if 'date_range_end' not in columns:
+                cursor.execute('''
+                    ALTER TABLE monthly_archives 
+                    ADD COLUMN date_range_end TEXT
+                ''')
+                conn.commit()
+                
+        except Exception as e:
+            print(f"Schema check/update: {e}")
+        
+        # Now clear all data
         cursor.execute('DELETE FROM transactions')
-        
-        # Delete all budget allocations
         cursor.execute('DELETE FROM budget_allocations')
-        
-        # Delete all login days (streak data)
         cursor.execute('DELETE FROM login_days')
-        
-        # Delete all monthly archives
         cursor.execute('DELETE FROM monthly_archives')
         
         # Reset user stats (keep structure, reset data)
@@ -504,8 +561,10 @@ class EnnaDatabase:
         return True
     
     # ============= MONTHLY ARCHIVE METHODS =============
+
     
-    def create_monthly_archive(self, month_year, summary_data, scores, transactions_json=None):
+    
+    def create_monthly_archive(self, month_year, summary_data, scores, transactions_json=None, date_range=None, name=None):
         """Create a monthly archive snapshot
         
         Args:
@@ -513,17 +572,32 @@ class EnnaDatabase:
             summary_data: Dict with {total_income, total_expenses, net, transaction_count}
             scores: Dict with {overall, savings, budget, consistency, balance}
             transactions_json: JSON string of transactions list (optional)
+            date_range: Dict with {start, end} date strings (optional)
+            name: Custom name for the archive (optional)
         """
+
+        # Generate default name if missing
+        if not name and date_range:
+            try:
+                from datetime import datetime
+                start = datetime.strptime(date_range['start'], '%Y-%m-%d')
+                end = datetime.strptime(date_range['end'], '%Y-%m-%d')
+                name = f"{start.strftime('%b %d')} - {end.strftime('%d, %Y')}"
+            except: 
+                name = month_year
+
         conn = self.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('''
             INSERT OR REPLACE INTO monthly_archives 
-            (month_year, total_income, total_expenses, net, financial_health_score,
-             savings_score, budget_score, consistency_score, balance_score, transaction_count, transactions_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (month_year, name, total_income, total_expenses, net, financial_health_score,
+             savings_score, budget_score, consistency_score, balance_score, transaction_count, 
+             transactions_json, date_range_start, date_range_end)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             month_year,
+            name,
             summary_data.get('total_income', 0),
             summary_data.get('total_expenses', 0),
             summary_data.get('net', 0),
@@ -533,7 +607,9 @@ class EnnaDatabase:
             scores.get('consistency', 0),
             scores.get('balance', 0),
             summary_data.get('transaction_count', 0),
-            transactions_json
+            transactions_json,
+            date_range.get('start') if date_range else None,
+            date_range.get('end') if date_range else None
         ))
         
         conn.commit()
@@ -580,7 +656,7 @@ class EnnaDatabase:
         cursor = conn.cursor()
         
         cursor.execute('''
-            SELECT month_year, total_income, total_expenses, net
+            SELECT month_year, name, total_income, total_expenses, net
             FROM monthly_archives 
             ORDER BY month_year DESC 
             LIMIT ?
@@ -611,6 +687,49 @@ class EnnaDatabase:
         deleted_count = cursor.rowcount
         conn.commit()
         return deleted_count
+
+    def _check_schema_updates(self):
+        """Fixes existing databases by adding missing columns"""
+        conn = self.get_connection()
+        try:
+            conn.execute('ALTER TABLE monthly_archives ADD COLUMN name TEXT')
+        except: pass # Column likely exists
+        try:
+            conn.execute('ALTER TABLE monthly_archives ADD COLUMN transactions_json TEXT')
+        except: pass
+        try:
+            conn.execute('ALTER TABLE monthly_archives ADD COLUMN date_range_start TEXT')
+        except: pass
+        try:
+            conn.execute('ALTER TABLE monthly_archives ADD COLUMN date_range_end TEXT')
+        except: pass
+
+    def get_next_archive_start_date(self):
+        """Calculates start date based on the last archive"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT date_range_end FROM monthly_archives ORDER BY date_range_end DESC LIMIT 1')
+        last = cursor.fetchone()
+        if last and last[0]:
+            from datetime import datetime, timedelta
+            return (datetime.strptime(last[0], '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+        # If no archives, find first transaction
+        cursor.execute('SELECT MIN(date) FROM transactions')
+        first = cursor.fetchone()
+        return first[0] if first and first[0] else datetime.now().strftime('%Y-%m-%d')
+
+    def update_archive_name(self, archive_id, new_name):
+        conn = self.get_connection()
+        conn.execute('UPDATE monthly_archives SET name = ? WHERE id = ?', (new_name, archive_id))
+        conn.commit()
+        return True
+
+    def clear_transactions_in_range(self, start, end):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM transactions WHERE date >= ? AND date <= ?', (start, end))
+        conn.commit()
+        return cursor.rowcount
     
     def close(self):
         """Close database connection"""

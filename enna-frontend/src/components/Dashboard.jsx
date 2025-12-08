@@ -15,10 +15,6 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [chartData, setChartData] = useState([]);
   
-  // Archive states
-  const [showArchiveButton, setShowArchiveButton] = useState(false);
-  const [isArchiving, setIsArchiving] = useState(false);
-  
   // Form states
   const [showAddTransaction, setShowAddTransaction] = useState(false);
   const [newTransaction, setNewTransaction] = useState({
@@ -31,7 +27,6 @@ const Dashboard = () => {
   // Fetch data on mount
   useEffect(() => {
     fetchData();
-    checkArchiveStatus();
   }, []);
 
   const fetchData = async () => {
@@ -113,86 +108,6 @@ const Dashboard = () => {
     });
 
     setChartData(last30Days);
-  };
-
-  const checkArchiveStatus = async () => {
-    try {
-      // Only show on 1st day of month
-      const today = new Date();
-      const dayOfMonth = today.getDate();
-      
-      if (dayOfMonth !== 1) {
-        // Not the 1st, don't show button
-        setShowArchiveButton(false);
-        return;
-      }
-      
-      const response = await fetch('http://localhost:5000/api/archives/check-current');
-      const data = await response.json();
-      
-      if (data.status === 'success' && !data.is_archived) {
-        // First day of month AND not archived yet - show button
-        setShowArchiveButton(true);
-      }
-    } catch (error) {
-      console.error('Failed to check archive status:', error);
-    }
-  };
-
-  const handleArchiveMonth = async () => {
-    try {
-      setIsArchiving(true);
-      
-      // Get previous month (format: YYYY-MM)
-      const today = new Date();
-      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const monthYear = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
-      
-      // Create archive with current data including all transactions
-      const archiveData = {
-        month_year: monthYear,
-        summary_data: {
-          total_income: summary.total_income,
-          total_expenses: summary.total_expenses,
-          net: summary.net,
-          transaction_count: transactions.length
-        },
-        scores: {
-          overall: 0,  // These would come from Reports calculations
-          savings: 0,
-          budget: 0,
-          consistency: 0,
-          balance: 0
-        },
-        transactions_json: JSON.stringify(transactions)  // Store all transactions
-      };
-      
-      const response = await fetch('http://localhost:5000/api/archives', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(archiveData)
-      });
-      
-      const data = await response.json();
-      
-      if (data.status === 'success') {
-        const clearedMsg = data.transactions_cleared > 0 
-          ? ` ${data.transactions_cleared} transactions cleared from new month.`
-          : '';
-        alert(`📦 ${lastMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} archived successfully!${clearedMsg}`);
-        setShowArchiveButton(false);
-        
-        // Refresh data to show cleared transactions
-        fetchData();
-      } else {
-        alert('Failed to create archive: ' + data.message);
-      }
-    } catch (error) {
-      console.error('Failed to archive month:', error);
-      alert('Failed to create archive. Please try again.');
-    } finally {
-      setIsArchiving(false);
-    }
   };
 
   const getCategorySpendingChart = (categoryId) => {
@@ -299,21 +214,6 @@ const Dashboard = () => {
     <div className="dashboard">
       {/* Greeting */}
       <Greeting />
-
-      {/* Archive Prompt */}
-      {showArchiveButton && (
-        <div className="archive-prompt">
-          <h3>🎉 New Month Started!</h3>
-          <p>Archive last month's financial data to keep your records organized.</p>
-          <button 
-            onClick={handleArchiveMonth} 
-            className="btn-archive"
-            disabled={isArchiving}
-          >
-            {isArchiving ? '📦 Archiving...' : '📦 Archive Last Month'}
-          </button>
-        </div>
-      )}
 
       {/* Dashboard Header */}
       <div className="dashboard-header">
