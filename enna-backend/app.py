@@ -88,6 +88,40 @@ def delete_transaction(transaction_id):
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+@app.route('/api/transactions/<int:transaction_id>', methods=['PUT'])
+def update_transaction(transaction_id):
+    """Update a transaction"""
+    try:
+        data = request.json
+        
+        # Prepare update fields
+        update_data = {}
+        if 'type' in data:
+            update_data['type'] = data['type']
+        if 'amount' in data:
+            update_data['amount'] = float(data['amount'])
+        if 'description' in data:
+            update_data['description'] = data['description']
+        if 'category_id' in data:
+            update_data['category_id'] = int(data['category_id']) if data['category_id'] else None
+        if 'date' in data:
+            update_data['date'] = data['date']
+        
+        success = db.update_transaction(transaction_id, **update_data)
+        
+        if success:
+            return jsonify({
+                'status': 'success',
+                'message': 'Transaction updated successfully'
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Transaction not found or no changes made'
+            }), 404
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 # ============= CATEGORY ENDPOINTS =============
 
 @app.route('/api/categories', methods=['GET'])
@@ -316,6 +350,40 @@ def set_user_name():
             'status': 'success',
             'message': 'Name updated successfully',
             'name': data['name']
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/user/emoji', methods=['GET'])
+def get_user_emoji():
+    """Get the user's profile emoji"""
+    try:
+        emoji = db.get_user_emoji()
+        return jsonify({
+            'status': 'success',
+            'emoji': emoji
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/user/emoji', methods=['POST'])
+def set_user_emoji():
+    """Set the user's profile emoji"""
+    try:
+        data = request.json
+        
+        if 'emoji' not in data:
+            return jsonify({
+                'status': 'error',
+                'message': 'Missing required field: emoji'
+            }), 400
+        
+        db.set_user_emoji(data['emoji'])
+        
+        return jsonify({
+            'status': 'success',
+            'message': 'Emoji updated successfully',
+            'emoji': data['emoji']
         })
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500

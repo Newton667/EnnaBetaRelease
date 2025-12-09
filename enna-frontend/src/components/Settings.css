@@ -205,6 +205,137 @@
   }
 }
 
+/* Emoji Picker Section */
+.emoji-picker-section {
+  background: rgba(30, 30, 30, 0.5);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 12px;
+  padding: 25px;
+  margin-top: 20px;
+}
+
+.emoji-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
+.emoji-section-header h3 {
+  color: #ffffff;
+  font-size: 18px;
+  margin: 0 0 5px 0;
+}
+
+.emoji-section-header p {
+  color: #a0a0a0;
+  font-size: 14px;
+  margin: 0;
+}
+
+.current-emoji-display {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(52, 211, 153, 0.05);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.current-emoji-large {
+  font-size: 48px;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.current-emoji-label {
+  color: #a0a0a0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.emoji-grid-container {
+  background: rgba(20, 20, 20, 0.6);
+  border: 2px solid rgba(52, 211, 153, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+  gap: 10px;
+  justify-items: center;
+}
+
+.emoji-option {
+  background: rgba(30, 30, 30, 0.6);
+  border: 2px solid rgba(52, 211, 153, 0.2);
+  border-radius: 10px;
+  width: 65px;
+  height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.emoji-option:hover {
+  background: rgba(30, 30, 30, 0.8);
+  border-color: rgba(52, 211, 153, 0.4);
+  transform: scale(1.1);
+}
+
+.emoji-option.selected {
+  background: rgba(52, 211, 153, 0.2);
+  border-color: #34d399;
+  box-shadow: 0 0 20px rgba(52, 211, 153, 0.3);
+}
+
+/* Responsive for emoji picker */
+@media (max-width: 768px) {
+  .emoji-picker-section {
+    padding: 20px;
+  }
+
+  .emoji-section-header {
+    flex-direction: column;
+  }
+
+  .emoji-grid {
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+  }
+
+  .emoji-option {
+    width: 50px;
+    height: 50px;
+    font-size: 28px;
+  }
+}
+
 /* Danger Zone */
 .danger-zone {
   border-color: rgba(239, 68, 68, 0.3);

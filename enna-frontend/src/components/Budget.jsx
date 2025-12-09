@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, PieChart, Pie, Cell, Legend } from 'recharts';
 import './Budget.css';
 
 const Budget = () => {
@@ -156,6 +156,32 @@ const Budget = () => {
     return last30Days;
   };
 
+  const getBudgetPieData = () => {
+    const data = categories
+      .filter(cat => cat.name !== 'Income' && budgetAllocations[cat.id] > 0)
+      .map(cat => ({
+        name: cat.name,
+        value: budgetAllocations[cat.id],
+        amount: getBudgetAmount(cat.id),
+        color: cat.color,
+        icon: cat.icon
+      }));
+
+    // Add unallocated if total is less than 100%
+    const totalAllocated = getTotalBudgetPercentage();
+    if (totalAllocated < 100) {
+      data.push({
+        name: 'Unallocated',
+        value: 100 - totalAllocated,
+        amount: (summary.total_income * (100 - totalAllocated) / 100).toFixed(2),
+        color: '#808080',
+        icon: '💤'
+      });
+    }
+
+    return data;
+  };
+
   if (isLoading) {
     return (
       <div className="budget-page">
@@ -193,6 +219,60 @@ const Budget = () => {
           <span className="stat-value expense">${summary.total_expenses.toFixed(2)}</span>
         </div>
       </div>
+
+      {/* Budget Allocation Pie Chart */}
+      {getBudgetPieData().length > 0 && (
+        <div className="budget-pie-section">
+          <h2 className="pie-section-title">Budget Allocation Overview</h2>
+          <div className="pie-chart-container">
+            <ResponsiveContainer width="100%" height={400}>
+              <PieChart>
+                <Pie
+                  data={getBudgetPieData()}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value.toFixed(1)}%`}
+                  labelStyle={{ fill: '#ffffff', fontSize: '14px', fontWeight: '600' }}
+                  outerRadius={120}
+                  innerRadius={60}
+                  fill="#8884d8"
+                  dataKey="value"
+                  paddingAngle={2}
+                >
+                  {getBudgetPieData().map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'rgba(30, 30, 30, 0.95)', 
+                    border: '1px solid rgba(52, 211, 153, 0.3)',
+                    borderRadius: '8px',
+                    color: '#ffffff'
+                  }}
+                  itemStyle={{ color: '#ffffff' }}
+                  labelStyle={{ color: '#ffffff' }}
+                  formatter={(value, name, props) => [
+                    `${value.toFixed(1)}% ($${props.payload.amount})`,
+                    `${props.payload.icon} ${name}`
+                  ]}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  iconType="circle"
+                  formatter={(value, entry) => (
+                    <span style={{ color: '#ffffff' }}>
+                      {entry.payload.icon} {value}
+                    </span>
+                  )}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
 
       {getTotalBudgetPercentage() > 100 && (
         <div className="budget-warning">

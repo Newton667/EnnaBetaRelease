@@ -1,5 +1,5 @@
 /* Transactions Container */
-/* Updated: 2025-11-24 - Cache buster v3 */
+/* Updated: 2025-12-09 - Added CSV Import styles */
 .transactions-container {
   padding: 30px;
   max-width: 1400px;
@@ -417,6 +417,24 @@
 .delete-btn:hover {
   opacity: 1;
   background: rgba(239, 68, 68, 0.2);
+  transform: scale(1.1);
+}
+
+.edit-btn {
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: #34d399;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.edit-btn:hover {
+  opacity: 1;
+  background: rgba(52, 211, 153, 0.2);
   transform: scale(1.1);
 }
 
@@ -861,4 +879,3 @@
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
 }
-

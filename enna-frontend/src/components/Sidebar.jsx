@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Sidebar.css';
 
-function Sidebar({ isOpen, onToggle, currentView, onViewChange }) {
+function Sidebar({ isOpen, onToggle, currentView, onViewChange, onProfileMenuClick }) {
   const menuItems = [
     { id: 'dashboard', icon: '📊', label: 'Dashboard' },
     { id: 'budget', icon: '💵', label: 'Budget' },
@@ -9,8 +9,38 @@ function Sidebar({ isOpen, onToggle, currentView, onViewChange }) {
     { id: 'reports', icon: '📈', label: 'Reports' },
     { id: 'archives', icon: '📦', label: 'Archives' },
     { id: 'streaks', icon: '🔥', label: 'Streaks' },
-    { id: 'settings', icon: '⚙️', label: 'Settings' },
   ];
+
+  const [userName, setUserName] = useState('Friend');
+  const [userEmoji, setUserEmoji] = useState('👤');
+
+  useEffect(() => {
+    fetchUserData();
+    
+    // Poll for updates every 5 seconds
+    const interval = setInterval(fetchUserData, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      // Fetch name
+      const nameResponse = await fetch('http://localhost:5000/api/user/name');
+      const nameData = await nameResponse.json();
+      if (nameData.status === 'success' && nameData.name) {
+        setUserName(nameData.name);
+      }
+
+      // Fetch emoji
+      const emojiResponse = await fetch('http://localhost:5000/api/user/emoji');
+      const emojiData = await emojiResponse.json();
+      if (emojiData.status === 'success' && emojiData.emoji) {
+        setUserEmoji(emojiData.emoji);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+    }
+  };
 
   return (
     <div className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
@@ -43,9 +73,13 @@ function Sidebar({ isOpen, onToggle, currentView, onViewChange }) {
 
       {/* Sidebar Footer */}
       <div className="sidebar-footer">
-        <button className="nav-item" title="Help">
-          <span className="nav-icon">❓</span>
-          {isOpen && <span className="nav-label">Help</span>}
+        <button 
+          className="nav-item profile-btn" 
+          onClick={onProfileMenuClick}
+          title={!isOpen ? 'Profile Menu' : ''}
+        >
+          <span className="nav-icon profile-emoji">{userEmoji}</span>
+          {isOpen && <span className="nav-label profile-name">{userName}</span>}
         </button>
       </div>
     </div>

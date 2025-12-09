@@ -10,17 +10,22 @@ import Reports from './components/Reports';
 import Archives from './components/Archives';
 import Clock from './components/Clock';
 import Calculator from './components/Calculator';
+import ProfileMenu from './components/ProfileMenu';
+import Help from './components/Help';
 import './App.css';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [currentView, setCurrentView] = useState('dashboard');
   const [backendConnected, setBackendConnected] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [isCheckingTutorial, setIsCheckingTutorial] = useState(true);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
+  const [userName, setUserName] = useState('Friend');
+  const [userEmoji, setUserEmoji] = useState('👤');
 
   // Define testBackend function FIRST
   const testBackend = async () => {
@@ -62,6 +67,40 @@ function App() {
     }
   };
 
+  // Fetch user name and emoji
+  const fetchUserName = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/user/name');
+      const data = await response.json();
+      if (data.status === 'success' && data.name) {
+        setUserName(data.name);
+      }
+
+      const emojiResponse = await fetch('http://localhost:5000/api/user/emoji');
+      const emojiData = await emojiResponse.json();
+      if (emojiData.status === 'success' && emojiData.emoji) {
+        setUserEmoji(emojiData.emoji);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user name:', error);
+    }
+  };
+
+  // Profile menu handlers
+  const handleProfileMenuToggle = () => {
+    setProfileMenuOpen(!profileMenuOpen);
+  };
+
+  const handleHelpClick = () => {
+    setProfileMenuOpen(false);
+    setCurrentView('help');
+  };
+
+  const handleSettingsClick = () => {
+    setProfileMenuOpen(false);
+    setCurrentView('settings');
+  };
+
   // Check if tutorial is needed
   const checkTutorialStatus = async () => {
     try {
@@ -94,6 +133,7 @@ function App() {
     testBackend();
     checkTutorialStatus();
     fetchStreaks(); // Fetch streaks from database instead of localStorage
+    fetchUserName(); // Fetch user name
     
     // Refresh streaks every 30 seconds to stay updated when transactions are added
     const streakInterval = setInterval(fetchStreaks, 30000);
@@ -127,6 +167,8 @@ function App() {
         return <Archives />;
       case 'streaks':
         return <Streaks />;
+      case 'help':
+        return <Help />;
       case 'settings':
         return <Settings />;
       default:
@@ -161,6 +203,17 @@ function App() {
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         currentView={currentView}
         onViewChange={setCurrentView}
+        onProfileMenuClick={handleProfileMenuToggle}
+      />
+
+      {/* Profile Menu */}
+      <ProfileMenu
+        isOpen={profileMenuOpen}
+        onClose={() => setProfileMenuOpen(false)}
+        onHelpClick={handleHelpClick}
+        onSettingsClick={handleSettingsClick}
+        userName={userName}
+        userEmoji={userEmoji}
       />
 
       {/* Main Content */}

@@ -120,6 +120,29 @@
   animation: pulse 2s ease-in-out infinite;
 }
 
+/* Budget Pie Chart Section */
+.budget-pie-section {
+  background: rgba(45, 45, 45, 0.8);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 12px;
+  padding: 30px;
+  margin-bottom: 30px;
+}
+
+.pie-section-title {
+  color: #34d399;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 25px 0;
+  text-align: center;
+}
+
+.pie-chart-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 @keyframes pulse {
   0%, 100% {
     opacity: 1;

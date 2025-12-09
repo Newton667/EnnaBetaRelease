@@ -49,8 +49,11 @@ class EnnaDatabase:
                 
             # Check for user_name in user_stats
             cursor.execute("PRAGMA table_info(user_stats)")
-            if 'user_name' not in [row[1] for row in cursor.fetchall()]:
+            user_stats_columns = [row[1] for row in cursor.fetchall()]
+            if 'user_name' not in user_stats_columns:
                 cursor.execute('ALTER TABLE user_stats ADD COLUMN user_name TEXT DEFAULT "Friend"')
+            if 'user_emoji' not in user_stats_columns:
+                cursor.execute('ALTER TABLE user_stats ADD COLUMN user_emoji TEXT DEFAULT "👤"')
             conn.commit()
         except Exception as e:
             print(f"Schema update error: {e}")
@@ -123,6 +126,7 @@ class EnnaDatabase:
             CREATE TABLE IF NOT EXISTS user_stats (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_name TEXT DEFAULT 'Friend',
+                user_emoji TEXT DEFAULT '👤',
                 longest_streak INTEGER DEFAULT 0,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -236,6 +240,41 @@ class EnnaDatabase:
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute('DELETE FROM transactions WHERE id = ?', (transaction_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+    
+    def update_transaction(self, transaction_id, type=None, amount=None, description=None, category_id=None, date=None):
+        """Update an existing transaction"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Build dynamic update query based on provided fields
+        update_fields = []
+        values = []
+        
+        if type is not None:
+            update_fields.append('type = ?')
+            values.append(type)
+        if amount is not None:
+            update_fields.append('amount = ?')
+            values.append(amount)
+        if description is not None:
+            update_fields.append('description = ?')
+            values.append(description)
+        if category_id is not None:
+            update_fields.append('category_id = ?')
+            values.append(category_id)
+        if date is not None:
+            update_fields.append('date = ?')
+            values.append(date)
+        
+        if not update_fields:
+            return False
+        
+        values.append(transaction_id)
+        query = f'UPDATE transactions SET {", ".join(update_fields)} WHERE id = ?'
+        
+        cursor.execute(query, values)
         conn.commit()
         return cursor.rowcount > 0
     
@@ -506,6 +545,38 @@ class EnnaDatabase:
             SET user_name = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = 1
         ''', (name,))
+        conn.commit()
+        return True
+    
+    def get_user_emoji(self):
+        """Get user's profile emoji"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT user_emoji FROM user_stats WHERE id = 1')
+        result = cursor.fetchone()
+        return result['user_emoji'] if result and result['user_emoji'] else '👤'
+    
+    def set_user_emoji(self, emoji):
+        """Set user's profile emoji"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # Check if user stats row exists
+        cursor.execute('SELECT id FROM user_stats WHERE id = 1')
+        if not cursor.fetchone():
+            # Create initial row
+            cursor.execute('''
+                INSERT INTO user_stats (id, user_name, user_emoji, longest_streak)
+                VALUES (1, 'Friend', ?, 0)
+            ''', (emoji,))
+        else:
+            # Update existing row
+            cursor.execute('''
+                UPDATE user_stats 
+                SET user_emoji = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = 1
+            ''', (emoji,))
+        
         conn.commit()
         return True
     

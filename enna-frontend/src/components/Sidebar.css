@@ -118,6 +118,28 @@
   border-top: 1px solid rgba(52, 211, 153, 0.1);
 }
 
+.profile-btn {
+  background: rgba(52, 211, 153, 0.05) !important;
+  border: 1px solid rgba(52, 211, 153, 0.2) !important;
+  padding: 16px 15px !important;
+}
+
+.profile-btn:hover {
+  background: rgba(52, 211, 153, 0.15) !important;
+  border-color: rgba(52, 211, 153, 0.4) !important;
+}
+
+.profile-emoji {
+  font-size: 28px !important;
+  width: 32px !important;
+}
+
+.profile-name {
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  color: #34d399 !important;
+}
+
 /* Scrollbar Styling */
 .sidebar-nav::-webkit-scrollbar {
   width: 4px;

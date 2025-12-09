@@ -10,6 +10,10 @@ function Settings() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [saveMessage, setSaveMessage] = useState('');
   
+  // Emoji settings
+  const [userEmoji, setUserEmoji] = useState('👤');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
   // Developer Settings
   const [showDevSettings, setShowDevSettings] = useState(false);
   const [dateTimeOverride, setDateTimeOverride] = useState(false);
@@ -17,8 +21,18 @@ function Settings() {
   const [overrideTime, setOverrideTime] = useState('');
   const [devMessage, setDevMessage] = useState('');
 
+  // Emoji options
+  const emojiOptions = [
+    '👤', '😊', '😎', '🤓', '🧑‍💼', '👨‍💼', '👩‍💼', '🧑‍🎓', '👨‍🎓', '👩‍🎓',
+    '🧑‍💻', '👨‍💻', '👩‍💻', '🧑‍🔬', '👨‍🔬', '👩‍🔬', '🧑‍🎨', '👨‍🎨', '👩‍🎨',
+    '🧑‍🚀', '👨‍🚀', '👩‍🚀', '🐱', '🐶', '🐼', '🦊', '🦁', '🐯',
+    '🐨', '🐮', '🐷', '🐸', '🐙', '🦄', '🌟', '⭐', '💎',
+    '🎯', '🎨', '🎭', '🎪', '🎮', '🎲', '🎸', '🎹', '🎺'
+  ];
+
   useEffect(() => {
     fetchUserName();
+    fetchUserEmoji();
     loadDevSettings();
   }, []);
 
@@ -32,6 +46,18 @@ function Settings() {
       }
     } catch (error) {
       console.error('Failed to fetch user name:', error);
+    }
+  };
+
+  const fetchUserEmoji = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/user/emoji');
+      const data = await response.json();
+      if (data.status === 'success') {
+        setUserEmoji(data.emoji || '👤');
+      }
+    } catch (error) {
+      console.error('Failed to fetch user emoji:', error);
     }
   };
 
@@ -65,6 +91,30 @@ function Settings() {
     setNewName(userName);
     setIsEditing(false);
     setSaveMessage('');
+  };
+
+  const handleEmojiSelect = async (emoji) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/user/emoji', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emoji })
+      });
+
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        setUserEmoji(emoji);
+        setShowEmojiPicker(false);
+        setSaveMessage('Emoji updated successfully! ✓');
+        setTimeout(() => setSaveMessage(''), 3000);
+      } else {
+        setSaveMessage('Failed to save emoji: ' + (data.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('❌ Exception:', error);
+      setSaveMessage('Failed to save emoji: ' + error.message);
+    }
   };
 
   const handleDeleteDatabase = async () => {
@@ -207,7 +257,7 @@ function Settings() {
         </div>
 
         <div className="profile-card">
-          <div className="profile-icon">👤</div>
+          <div className="profile-icon" style={{ fontSize: '48px' }}>{userEmoji}</div>
           <div className="profile-info">
             <label>Display Name</label>
             {isEditing ? (
@@ -246,6 +296,44 @@ function Settings() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Emoji Picker Section */}
+        <div className="emoji-picker-section">
+          <div className="emoji-section-header">
+            <div>
+              <h3>Profile Emoji</h3>
+              <p>Choose an emoji to represent you</p>
+            </div>
+            <button 
+              className="btn-edit"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            >
+              {showEmojiPicker ? '✖️ Close' : '✏️ Change'}
+            </button>
+          </div>
+          
+          <div className="current-emoji-display">
+            <span className="current-emoji-large">{userEmoji}</span>
+            <span className="current-emoji-label">Current emoji</span>
+          </div>
+
+          {showEmojiPicker && (
+            <div className="emoji-grid-container">
+              <div className="emoji-grid">
+                {emojiOptions.map((emoji, index) => (
+                  <button
+                    key={index}
+                    className={`emoji-option ${emoji === userEmoji ? 'selected' : ''}`}
+                    onClick={() => handleEmojiSelect(emoji)}
+                    type="button"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

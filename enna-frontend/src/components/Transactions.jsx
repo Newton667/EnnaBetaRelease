@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import './Transactions.css';
+import CSVImportModal from './CSVImportModal';
 
 function Transactions() {
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showCSVImport, setShowCSVImport] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [transactionToDelete, setTransactionToDelete] = useState(null);
+  const [transactionToEdit, setTransactionToEdit] = useState(null);
   const [filter, setFilter] = useState('all'); // 'all', 'income', 'expense'
   const [sortBy, setSortBy] = useState('date'); // 'date', 'amount'
   const [groupBy, setGroupBy] = useState('date'); // 'date' or 'category'
@@ -19,6 +23,15 @@ function Transactions() {
     description: '',
     category_id: '',
     date: new Date().toISOString().split('T')[0]
+  });
+
+  // Edit form state
+  const [editFormData, setEditFormData] = useState({
+    type: 'expense',
+    amount: '',
+    description: '',
+    category_id: '',
+    date: ''
   });
 
   // Fetch transactions and categories
@@ -53,6 +66,37 @@ function Transactions() {
       }
     } catch (error) {
       console.error('Failed to fetch categories:', error);
+    }
+  };
+
+  const handleCSVImport = async (importedTransactions) => {
+    try {
+      // Bulk import transactions
+      const promises = importedTransactions.map(transaction =>
+        fetch('http://localhost:5000/api/transactions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(transaction),
+        })
+      );
+
+      const responses = await Promise.all(promises);
+      const results = await Promise.all(responses.map(r => r.json()));
+      
+      const successCount = results.filter(r => r.status === 'success').length;
+      const failCount = results.length - successCount;
+
+      if (successCount > 0) {
+        alert(`Successfully imported ${successCount} transaction${successCount !== 1 ? 's' : ''}${failCount > 0 ? ` (${failCount} failed)` : ''}!`);
+        fetchTransactions();
+      } else {
+        alert('Failed to import transactions. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error importing transactions:', error);
+      alert('Failed to import transactions');
     }
   };
 
@@ -106,9 +150,59 @@ function Transactions() {
     setShowConfirmDelete(true);
   };
 
-  const handleDeleteTransaction = async (id) => {
+  const handleEditClick = (transaction) => {
+    setTransactionToEdit(transaction);
+    setEditFormData({
+      type: transaction.type,
+      amount: transaction.amount.toString(),
+      description: transaction.description,
+      category_id: transaction.category_id || '',
+      date: transaction.date
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateTransaction = async (e) => {
+    e.preventDefault();
+    
+    if (!editFormData.amount || editFormData.amount <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
     try {
-      const response = await fetch(`http://localhost:5000/api/transactions/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/transactions/${transactionToEdit.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...editFormData,
+          amount: parseFloat(editFormData.amount),
+          category_id: editFormData.category_id ? parseInt(editFormData.category_id) : null
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        setShowEditModal(false);
+        setTransactionToEdit(null);
+        fetchTransactions();
+      } else {
+        alert('Failed to update transaction: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error updating transaction:', error);
+      alert('Failed to update transaction');
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!transactionToDelete) return;
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/transactions/${transactionToDelete.id}`, {
         method: 'DELETE',
       });
 
@@ -119,7 +213,7 @@ function Transactions() {
         setTransactionToDelete(null);
         fetchTransactions();
       } else {
-        alert('Failed to delete transaction');
+        alert('Failed to delete transaction: ' + data.message);
       }
     } catch (error) {
       console.error('Error deleting transaction:', error);
@@ -127,8 +221,13 @@ function Transactions() {
     }
   };
 
+  const handleCancelDelete = () => {
+    setShowConfirmDelete(false);
+    setTransactionToDelete(null);
+  };
+
   // Filter and sort transactions
-  const getFilteredTransactions = () => {
+  const getFilteredAndSortedTransactions = () => {
     let filtered = [...transactions];
 
     // Apply filter
@@ -146,116 +245,49 @@ function Transactions() {
     return filtered;
   };
 
-  // Group transactions by date
+  // Group transactions
   const getGroupedTransactions = () => {
-    const filtered = getFilteredTransactions();
+    const filtered = getFilteredAndSortedTransactions();
     
-    // No grouping
-    if (groupBy === 'none') {
-      return [{ label: null, transactions: filtered, icon: null }];
-    }
-
-    // Group by category
-    if (groupBy === 'category') {
+    if (groupBy === 'date') {
       const groups = {};
-      
       filtered.forEach(transaction => {
-        const categoryName = transaction.category_name || 'Uncategorized';
-        const categoryIcon = transaction.icon || '📦';
-        
-        if (!groups[categoryName]) {
-          groups[categoryName] = {
-            label: categoryName,
-            icon: categoryIcon,
-            transactions: [],
-            totalAmount: 0
-          };
+        const date = new Date(transaction.date).toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+        if (!groups[date]) {
+          groups[date] = [];
         }
-        
-        groups[categoryName].transactions.push(transaction);
-        groups[categoryName].totalAmount += transaction.amount;
+        groups[date].push(transaction);
       });
-      
-      // Convert to array and sort by total amount
-      return Object.values(groups).sort((a, b) => b.totalAmount - a.totalAmount);
+      return groups;
     }
-
-    // Group by date (original logic)
-    const groups = {};
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
     
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const thisWeekStart = new Date(today);
-    thisWeekStart.setDate(thisWeekStart.getDate() - today.getDay());
-    
-    const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    
-    filtered.forEach(transaction => {
-      const transactionDate = new Date(transaction.date);
-      transactionDate.setHours(0, 0, 0, 0);
-      
-      let groupKey;
-      
-      if (transactionDate.getTime() === today.getTime()) {
-        groupKey = 'Today';
-      } else if (transactionDate.getTime() === yesterday.getTime()) {
-        groupKey = 'Yesterday';
-      } else if (transactionDate >= thisWeekStart && transactionDate < today) {
-        groupKey = 'This Week';
-      } else if (transactionDate >= thisMonthStart && transactionDate < thisWeekStart) {
-        groupKey = 'Earlier This Month';
-      } else if (transactionDate.getFullYear() === today.getFullYear()) {
-        groupKey = transactionDate.toLocaleDateString('en-US', { month: 'long' });
-      } else {
-        groupKey = transactionDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      }
-      
-      if (!groups[groupKey]) {
-        groups[groupKey] = {
-          label: groupKey,
-          transactions: [],
-          timestamp: transactionDate.getTime(),
-          icon: null
-        };
-      }
-      
-      groups[groupKey].transactions.push(transaction);
-    });
-    
-    // Convert to array and sort by timestamp
-    return Object.values(groups).sort((a, b) => b.timestamp - a.timestamp);
+    return { 'All Transactions': filtered };
   };
 
+  // Calculate summary
+  const calculateSummary = () => {
+    const income = transactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    const expense = transactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+    
+    return {
+      income,
+      expense,
+      net: income - expense
+    };
+  };
+
+  const summary = calculateSummary();
   const groupedTransactions = getGroupedTransactions();
-
-  // Calculate totals
-  const totals = transactions.reduce((acc, t) => {
-    if (t.type === 'income') {
-      acc.income += t.amount;
-    } else {
-      acc.expense += t.amount;
-    }
-    return acc;
-  }, { income: 0, expense: 0 });
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
 
   if (loading) {
     return (
@@ -273,16 +305,19 @@ function Transactions() {
       {/* Header */}
       <div className="transactions-header">
         <div className="header-left">
-          <h1>📊 Transactions</h1>
-          <p className="subtitle">Track your income and expenses</p>
+          <h1>💳 Transactions</h1>
+          <p className="subtitle">Manage your income and expenses</p>
         </div>
-        <button 
-          className="add-transaction-btn"
-          onClick={() => setShowAddModal(true)}
-        >
-          <span className="btn-icon">+</span>
-          Add Transaction
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="add-transaction-btn csv-import-btn" onClick={() => setShowCSVImport(true)}>
+            <span className="btn-icon">📊</span>
+            Import CSV
+          </button>
+          <button className="add-transaction-btn" onClick={() => setShowAddModal(true)}>
+            <span className="btn-icon">+</span>
+            Add Transaction
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -291,28 +326,28 @@ function Transactions() {
           <div className="card-icon">💰</div>
           <div className="card-content">
             <div className="card-label">Total Income</div>
-            <div className="card-value">{formatCurrency(totals.income)}</div>
+            <div className="card-value">${summary.income.toFixed(2)}</div>
           </div>
         </div>
-        
+
         <div className="summary-card expense">
           <div className="card-icon">💸</div>
           <div className="card-content">
             <div className="card-label">Total Expenses</div>
-            <div className="card-value">{formatCurrency(totals.expense)}</div>
+            <div className="card-value">${summary.expense.toFixed(2)}</div>
           </div>
         </div>
-        
-        <div className={`summary-card net ${totals.income - totals.expense >= 0 ? 'positive' : 'negative'}`}>
-          <div className="card-icon">📈</div>
+
+        <div className={`summary-card net ${summary.net >= 0 ? 'positive' : 'negative'}`}>
+          <div className="card-icon">📊</div>
           <div className="card-content">
             <div className="card-label">Net Balance</div>
-            <div className="card-value">{formatCurrency(totals.income - totals.expense)}</div>
+            <div className="card-value">${summary.net.toFixed(2)}</div>
           </div>
         </div>
       </div>
 
-      {/* Filters and Controls */}
+      {/* Controls */}
       <div className="transactions-controls">
         <div className="filter-group">
           <label>Filter:</label>
@@ -341,92 +376,77 @@ function Transactions() {
         <div className="sort-group">
           <label>Sort by:</label>
           <select 
-            value={sortBy} 
+            className="sort-select"
+            value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="sort-select"
           >
-            <option value="date">Date</option>
-            <option value="amount">Amount</option>
-          </select>
-        </div>
-
-        <div className="sort-group">
-          <label>Group by:</label>
-          <select 
-            value={groupBy} 
-            onChange={(e) => setGroupBy(e.target.value)}
-            className="sort-select"
-          >
-            <option value="date">📅 Date</option>
-            <option value="category">📂 Category</option>
-            <option value="none">📋 None</option>
+            <option value="date">Date (Newest First)</option>
+            <option value="amount">Amount (Highest First)</option>
           </select>
         </div>
       </div>
 
       {/* Transactions List */}
-      <div className="transactions-list">
-        {groupedTransactions.length === 0 || groupedTransactions.every(g => g.transactions.length === 0) ? (
-          <div className="empty-state">
-            <div className="empty-icon">📭</div>
-            <h3>No transactions found</h3>
-            <p>Start tracking your finances by adding your first transaction</p>
-            <button 
-              className="add-transaction-btn"
-              onClick={() => setShowAddModal(true)}
-            >
+      {transactions.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon">📭</div>
+          <h3>No transactions yet</h3>
+          <p>Start by adding your first transaction or import from CSV</p>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+            <button className="add-transaction-btn" onClick={() => setShowCSVImport(true)}>
+              <span className="btn-icon">📊</span>
+              Import CSV
+            </button>
+            <button className="add-transaction-btn" onClick={() => setShowAddModal(true)}>
+              <span className="btn-icon">+</span>
               Add Transaction
             </button>
           </div>
-        ) : (
-          groupedTransactions.map((group, groupIndex) => (
-            <div key={groupIndex} className="transaction-group">
-              {group.label && (
-                <div className="date-group-header">
-                  <span className="date-group-title">
-                    {group.icon && <span style={{ marginRight: '8px' }}>{group.icon}</span>}
-                    {group.label}
-                  </span>
-                  <span className="date-group-count">
-                    {group.transactions.length} transaction{group.transactions.length !== 1 ? 's' : ''}
-                    {groupBy === 'category' && group.totalAmount && (
-                      <span style={{ marginLeft: '8px', color: '#34d399' }}>
-                        • {formatCurrency(group.totalAmount)}
-                      </span>
-                    )}
-                  </span>
+        </div>
+      ) : (
+        <div className="transactions-list">
+          {Object.entries(groupedTransactions).map(([date, groupTransactions]) => (
+            <div key={date} className="transaction-group">
+              <div className="date-group-header">
+                <div className="date-group-title">{date}</div>
+                <div className="date-group-count">
+                  {groupTransactions.length} transaction{groupTransactions.length !== 1 ? 's' : ''}
                 </div>
-              )}
-              
-              {group.transactions.map((transaction) => (
-                <div 
-                  key={transaction.id} 
-                  className={`transaction-item ${transaction.type}`}
-                >
+              </div>
+
+              {groupTransactions.map(transaction => (
+                <div key={transaction.id} className={`transaction-item ${transaction.type}`}>
                   <div className="transaction-icon">
-                    {transaction.icon || (transaction.type === 'income' ? '💰' : '💸')}
+                    {transaction.type === 'income' ? '💰' : '💸'}
                   </div>
                   
                   <div className="transaction-details">
                     <div className="transaction-description">
-                      {transaction.description || 'No description'}
+                      {transaction.description}
                     </div>
                     <div className="transaction-meta">
-                      <span className="transaction-category">
-                        {transaction.category_name || 'Uncategorized'}
-                      </span>
+                      {transaction.category_name && (
+                        <span className="transaction-category">
+                          {transaction.category_name}
+                        </span>
+                      )}
                       <span className="transaction-date">
-                        {formatDate(transaction.date)}
+                        {new Date(transaction.date).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
 
                   <div className="transaction-right">
                     <div className={`transaction-amount ${transaction.type}`}>
-                      {transaction.type === 'income' ? '+' : '-'}
-                      {formatCurrency(transaction.amount)}
+                      {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
                     </div>
-                    
+                    <button 
+                      className="edit-btn"
+                      onClick={() => handleEditClick(transaction)}
+                      title="Edit transaction"
+                    >
+                      ✏️
+                    </button>
                     <button 
                       className="delete-btn"
                       onClick={() => handleDeleteClick(transaction)}
@@ -438,292 +458,99 @@ function Transactions() {
                 </div>
               ))}
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {/* CSV Import Modal */}
+      <CSVImportModal
+        isOpen={showCSVImport}
+        onClose={() => setShowCSVImport(false)}
+        onImport={handleCSVImport}
+        categories={categories}
+      />
 
       {/* Add Transaction Modal */}
       {showAddModal && (
-        <div 
-          className="modal-overlay" 
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowAddModal(false);
-            }
-          }}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            backdropFilter: 'blur(4px)'
-          }}
-        >
-          <div 
-            className="modal-content" 
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
-              border: '1px solid rgba(52, 211, 153, 0.3)',
-              borderRadius: '16px',
-              width: '90%',
-              maxWidth: '500px',
-              maxHeight: '90vh',
-              overflowY: 'auto',
-              position: 'relative'
-            }}
-          >
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '24px',
-              borderBottom: '1px solid rgba(52, 211, 153, 0.2)'
-            }}>
-              <h2 style={{
-                color: '#ffffff',
-                fontSize: '24px',
-                fontWeight: 600,
-                margin: 0
-              }}>Add Transaction</h2>
-              <button 
-                onClick={() => setShowAddModal(false)}
-                style={{
-                  background: 'rgba(160, 160, 160, 0.1)',
-                  border: '1px solid rgba(160, 160, 160, 0.3)',
-                  color: '#a0a0a0',
-                  borderRadius: '8px',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '20px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                ✕
-              </button>
+        <div className="modal-overlay" onClick={(e) => e.target.className === 'modal-overlay' && setShowAddModal(false)}>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Add New Transaction</h2>
+              <button className="modal-close" onClick={() => setShowAddModal(false)}>×</button>
             </div>
 
-            <form onSubmit={handleAddTransaction} style={{ padding: '24px' }}>
-              {/* Type Selector */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'block',
-                  color: '#a0a0a0',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  marginBottom: '8px'
-                }}>Type</label>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '12px'
-                }}>
+            <form className="transaction-form" onSubmit={handleAddTransaction}>
+              <div className="form-group">
+                <label>Type</label>
+                <div className="type-selector">
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, type: 'income' })}
-                    style={{
-                      background: formData.type === 'income' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(30, 30, 30, 0.6)',
-                      border: `2px solid ${formData.type === 'income' ? '#10b981' : 'rgba(52, 211, 153, 0.2)'}`,
-                      color: formData.type === 'income' ? '#10b981' : '#a0a0a0',
-                      borderRadius: '10px',
-                      padding: '16px',
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
+                    className={`type-btn income ${formData.type === 'income' ? 'active' : ''}`}
+                    onClick={() => setFormData({...formData, type: 'income'})}
                   >
                     💰 Income
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, type: 'expense' })}
-                    style={{
-                      background: formData.type === 'expense' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(30, 30, 30, 0.6)',
-                      border: `2px solid ${formData.type === 'expense' ? '#ef4444' : 'rgba(52, 211, 153, 0.2)'}`,
-                      color: formData.type === 'expense' ? '#ef4444' : '#a0a0a0',
-                      borderRadius: '10px',
-                      padding: '16px',
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
+                    className={`type-btn expense ${formData.type === 'expense' ? 'active' : ''}`}
+                    onClick={() => setFormData({...formData, type: 'expense'})}
                   >
                     💸 Expense
                   </button>
                 </div>
               </div>
 
-              {/* Amount */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'block',
-                  color: '#a0a0a0',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  marginBottom: '8px'
-                }}>Amount *</label>
+              <div className="form-group">
+                <label>Amount</label>
                 <input
                   type="number"
                   step="0.01"
-                  min="0"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   placeholder="0.00"
+                  value={formData.amount}
+                  onChange={(e) => setFormData({...formData, amount: e.target.value})}
                   required
-                  style={{
-                    width: '100%',
-                    background: 'rgba(30, 30, 30, 0.6)',
-                    border: '1px solid rgba(52, 211, 153, 0.2)',
-                    color: '#ffffff',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    fontSize: '16px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
                 />
               </div>
 
-              {/* Description */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'block',
-                  color: '#a0a0a0',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  marginBottom: '8px'
-                }}>Description</label>
+              <div className="form-group">
+                <label>Description</label>
                 <input
                   type="text"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="What was this for?"
-                  style={{
-                    width: '100%',
-                    background: 'rgba(30, 30, 30, 0.6)',
-                    border: '1px solid rgba(52, 211, 153, 0.2)',
-                    color: '#ffffff',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    fontSize: '16px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  required
                 />
               </div>
 
-              {/* Category */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{
-                  display: 'block',
-                  color: '#a0a0a0',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  marginBottom: '8px'
-                }}>Category</label>
+              <div className="form-group">
+                <label>Category</label>
                 <select
                   value={formData.category_id}
-                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                  style={{
-                    width: '100%',
-                    background: 'rgba(30, 30, 30, 0.6)',
-                    border: '1px solid rgba(52, 211, 153, 0.2)',
-                    color: '#ffffff',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    fontSize: '16px',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    cursor: 'pointer'
-                  }}
+                  onChange={(e) => setFormData({...formData, category_id: e.target.value})}
                 >
-                  <option value="">Select a category</option>
+                  <option value="">-- No Category --</option>
                   {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.icon} {cat.name}
-                    </option>
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Date */}
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{
-                  display: 'block',
-                  color: '#a0a0a0',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  marginBottom: '8px'
-                }}>Date *</label>
+              <div className="form-group">
+                <label>Date</label>
                 <input
                   type="date"
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={(e) => setFormData({...formData, date: e.target.value})}
                   required
-                  style={{
-                    width: '100%',
-                    background: 'rgba(30, 30, 30, 0.6)',
-                    border: '1px solid rgba(52, 211, 153, 0.2)',
-                    color: '#ffffff',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    fontSize: '16px',
-                    outline: 'none',
-                    boxSizing: 'border-box'
-                  }}
                 />
               </div>
 
-              {/* Action Buttons */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '12px'
-              }}>
-                <button 
-                  type="button" 
-                  onClick={() => setShowAddModal(false)}
-                  style={{
-                    padding: '14px',
-                    borderRadius: '10px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    background: 'rgba(30, 30, 30, 0.8)',
-                    border: '1px solid rgba(52, 211, 153, 0.3)',
-                    color: '#ffffff',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
+              <div className="form-actions">
+                <button type="button" className="btn-cancel" onClick={() => setShowAddModal(false)}>
                   Cancel
                 </button>
-                <button 
-                  type="submit"
-                  style={{
-                    padding: '14px',
-                    borderRadius: '10px',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
-                    border: '1px solid transparent',
-                    color: '#ffffff',
-                    boxShadow: '0 4px 12px rgba(52, 211, 153, 0.3)',
-                    transition: 'all 0.2s ease'
-                  }}
-                >
+                <button type="submit" className="btn-submit">
                   Add Transaction
                 </button>
               </div>
@@ -732,62 +559,136 @@ function Transactions() {
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Edit Transaction Modal */}
+      {showEditModal && transactionToEdit && (
+        <div className="modal-overlay" onClick={(e) => e.target.className === 'modal-overlay' && setShowEditModal(false)}>
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Edit Transaction</h2>
+              <button className="modal-close" onClick={() => setShowEditModal(false)}>×</button>
+            </div>
+
+            <form className="transaction-form" onSubmit={handleUpdateTransaction}>
+              <div className="form-group">
+                <label>Type</label>
+                <div className="type-selector">
+                  <button
+                    type="button"
+                    className={`type-btn income ${editFormData.type === 'income' ? 'active' : ''}`}
+                    onClick={() => setEditFormData({...editFormData, type: 'income'})}
+                  >
+                    💰 Income
+                  </button>
+                  <button
+                    type="button"
+                    className={`type-btn expense ${editFormData.type === 'expense' ? 'active' : ''}`}
+                    onClick={() => setEditFormData({...editFormData, type: 'expense'})}
+                  >
+                    💸 Expense
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Amount</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={editFormData.amount}
+                  onChange={(e) => setEditFormData({...editFormData, amount: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Description</label>
+                <input
+                  type="text"
+                  placeholder="What was this for?"
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Category</label>
+                <select
+                  value={editFormData.category_id}
+                  onChange={(e) => setEditFormData({...editFormData, category_id: e.target.value})}
+                >
+                  <option value="">-- No Category --</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Date</label>
+                <input
+                  type="date"
+                  value={editFormData.date}
+                  onChange={(e) => setEditFormData({...editFormData, date: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="btn-cancel" onClick={() => setShowEditModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-submit">
+                  Update Transaction
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
       {showConfirmDelete && transactionToDelete && (
-        <div 
-          className="modal-overlay" 
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowConfirmDelete(false);
-              setTransactionToDelete(null);
-            }
-          }}
-        >
-          <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" onClick={(e) => e.target.className === 'modal-overlay' && handleCancelDelete()}>
+          <div className="confirmation-dialog">
             <div className="confirmation-header">
               <h3>
                 <span className="warning-icon">⚠️</span>
-                Delete Transaction
+                Delete Transaction?
               </h3>
             </div>
 
             <div className="confirmation-body">
               <p>Are you sure you want to delete this transaction?</p>
               <p>This action cannot be undone.</p>
-              
+
               <div className="transaction-preview">
                 <div className="transaction-preview-item">
-                  <span className="preview-label">📝 Description:</span>
-                  <span className="preview-value">{transactionToDelete.description || 'No description'}</span>
+                  <span className="preview-label">Description:</span>
+                  <span className="preview-value">{transactionToDelete.description}</span>
                 </div>
                 <div className="transaction-preview-item">
-                  <span className="preview-label">💵 Amount:</span>
+                  <span className="preview-label">Amount:</span>
                   <span className="preview-value">
                     {transactionToDelete.type === 'income' ? '+' : '-'}
-                    {formatCurrency(transactionToDelete.amount)}
+                    ${transactionToDelete.amount.toFixed(2)}
                   </span>
                 </div>
                 <div className="transaction-preview-item">
-                  <span className="preview-label">📅 Date:</span>
-                  <span className="preview-value">{formatDate(transactionToDelete.date)}</span>
+                  <span className="preview-label">Date:</span>
+                  <span className="preview-value">
+                    {new Date(transactionToDelete.date).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="confirmation-actions">
-              <button 
-                className="btn-confirm-cancel"
-                onClick={() => {
-                  setShowConfirmDelete(false);
-                  setTransactionToDelete(null);
-                }}
-              >
+              <button className="btn-confirm-cancel" onClick={handleCancelDelete}>
                 Cancel
               </button>
-              <button 
-                className="btn-confirm-delete"
-                onClick={() => handleDeleteTransaction(transactionToDelete.id)}
-              >
+              <button className="btn-confirm-delete" onClick={handleConfirmDelete}>
                 Delete
               </button>
             </div>
