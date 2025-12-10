@@ -9,6 +9,7 @@ function Sidebar({ isOpen, onToggle, currentView, onViewChange, onProfileMenuCli
     { id: 'reports', icon: '📈', label: 'Reports' },
     { id: 'archives', icon: '📦', label: 'Archives' },
     { id: 'streaks', icon: '🔥', label: 'Streaks' },
+    { id: 'advice', icon: '📚', label: 'Financial Advice' },
   ];
 
   const [userName, setUserName] = useState('Friend');

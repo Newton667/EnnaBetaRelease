@@ -1,0 +1,193 @@
+/* Financial Advice Container */
+.financial-advice {
+  padding: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Header - matches Reports.css */
+.advice-header {
+  margin-bottom: 30px;
+}
+
+.advice-header h1 {
+  font-size: 32px;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.advice-subtitle {
+  color: #a0a0a0;
+  font-size: 16px;
+}
+
+/* Back Button */
+.back-button {
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  color: #34d399;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-button:hover {
+  background: rgba(52, 211, 153, 0.2);
+  transform: translateX(-4px);
+}
+
+/* Topics Grid */
+.topics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* Topic Card */
+.topic-card {
+  background: rgba(30, 30, 30, 0.6);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.topic-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #34d399, #10b981);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.topic-card:hover::before {
+  transform: scaleX(1);
+}
+
+.topic-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 28px rgba(52, 211, 153, 0.2);
+  border-color: rgba(52, 211, 153, 0.5);
+  background: rgba(30, 30, 30, 0.8);
+}
+
+.topic-icon {
+  font-size: 56px;
+  margin-bottom: 8px;
+}
+
+.topic-name {
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.topic-description {
+  color: #a0a0a0;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.topic-arrow {
+  color: #34d399;
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 8px;
+  transition: transform 0.3s ease;
+}
+
+.topic-card:hover .topic-arrow {
+  transform: translateX(8px);
+}
+
+/* Disclaimer Section */
+.disclaimer-section {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 40px;
+}
+
+.disclaimer-section h3 {
+  color: #ef4444;
+  font-size: 18px;
+  margin: 0 0 12px 0;
+}
+
+.disclaimer-section p {
+  color: #f0f0f0;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Scrollbar */
+.financial-advice::-webkit-scrollbar {
+  width: 8px;
+}
+
+.financial-advice::-webkit-scrollbar-track {
+  background: rgba(30, 30, 30, 0.5);
+}
+
+.financial-advice::-webkit-scrollbar-thumb {
+  background: rgba(52, 211, 153, 0.3);
+  border-radius: 4px;
+}
+
+.financial-advice::-webkit-scrollbar-thumb:hover {
+  background: rgba(52, 211, 153, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .financial-advice {
+    padding: 20px 15px;
+  }
+
+  .advice-header h1 {
+    font-size: 26px;
+  }
+
+  .topics-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .topic-card {
+    padding: 24px;
+  }
+
+  .topic-icon {
+    font-size: 48px;
+  }
+
+  .topic-name {
+    font-size: 20px;
+  }
+}

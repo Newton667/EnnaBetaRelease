@@ -8,6 +8,7 @@ import Settings from './components/Settings';
 import Tutorial from './components/Tutorial';
 import Reports from './components/Reports';
 import Archives from './components/Archives';
+import FinancialAdvice from './components/FinancialAdvice';
 import Clock from './components/Clock';
 import Calculator from './components/Calculator';
 import ProfileMenu from './components/ProfileMenu';
@@ -167,6 +168,8 @@ function App() {
         return <Archives />;
       case 'streaks':
         return <Streaks />;
+      case 'advice':
+        return <FinancialAdvice />;
       case 'help':
         return <Help />;
       case 'settings':
