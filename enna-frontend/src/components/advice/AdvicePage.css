@@ -5,6 +5,70 @@
   margin: 0 auto;
 }
 
+/* Remove default button outlines globally for advice page */
+.advice-page button {
+  outline: none !important;
+}
+
+.advice-page button:focus {
+  outline: none !important;
+}
+
+.advice-page button:active {
+  outline: none !important;
+}
+
+/* Back Button */
+.btn-back {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  color: #1a1a1a;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(52, 211, 153, 0.3) !important;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 20px;
+  outline: none !important;
+}
+
+.btn-back::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-back:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.btn-back:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 211, 153, 0.4) !important;
+}
+
+.btn-back:focus {
+  outline: none !important;
+  box-shadow: 0 4px 15px rgba(52, 211, 153, 0.3) !important;
+}
+
+.btn-back:active {
+  outline: none !important;
+  box-shadow: 0 4px 15px rgba(52, 211, 153, 0.3) !important;
+}
+
 /* Page Header - matches Reports.css */
 .page-header {
   display: flex;
@@ -100,6 +164,75 @@
   margin-bottom: 0;
 }
 
+/* Calculator Section Styles (New) */
+.calculator-section {
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  background: rgba(52, 211, 153, 0.05);
+}
+
+.calculator-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.calculator-input-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.calculator-label {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.currency-symbol {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #34d399;
+  font-weight: bold;
+}
+
+.income-input {
+  background: rgba(30, 30, 30, 0.8);
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  border-radius: 8px;
+  padding: 12px 12px 12px 30px;
+  color: #ffffff;
+  font-size: 18px;
+  width: 150px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.income-input:focus {
+  border-color: #34d399;
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+}
+
+.calculator-grid {
+  margin-top: 0;
+}
+
+.needs-card { border-color: #34d399 !important; }
+.needs-card h3 { color: #34d399 !important; }
+
+.wants-card { border-color: #60a5fa !important; }
+.wants-card h3 { color: #60a5fa !important; }
+
+.savings-card { border-color: #f59e0b !important; }
+.savings-card h3 { color: #f59e0b !important; }
+
 /* Diagram Section */
 .diagram-section {
   background: rgba(30, 30, 30, 0.4);
@@ -126,7 +259,7 @@
 .chart-container {
   background: rgba(20, 20, 20, 0.5);
   border-radius: 12px;
-  padding: 30px;
+  padding: 40px 30px;
   margin-bottom: 30px;
 }
 

@@ -3,18 +3,23 @@ import './AdvicePage.css';
 
 function SavingStrategies() {
   // Savings comparison data - traditional vs high-yield
+  // Updated data to reflect current market rates (approx. 4.2-4.5% vs 0.01%)
+  // Adjusted 'annual' value for Traditional Bank slightly higher for visibility on chart (e.g., 5 instead of 1)
+  // while keeping the label accurate to illustrate the point.
   const savingsData = [
     { 
       name: 'Traditional Bank', 
       rate: 0.01, 
-      annual: 1,
-      label: '0.01% APY'
+      annual: 5, // Visual boost for chart readability (actual is ~$1)
+      label: '0.01% APY',
+      displayValue: '$1'
     },
     { 
       name: 'High-Yield Savings', 
-      rate: 4.5, 
-      annual: 450,
-      label: '4.5% APY'
+      rate: 4.2, 
+      annual: 420, // $10,000 * 4.2%
+      label: '4.20% APY',
+      displayValue: '$420'
     }
   ];
 
@@ -25,7 +30,7 @@ function SavingStrategies() {
         <div className="header-icon">🏦</div>
         <div className="header-text">
           <h1>Saving Strategies</h1>
-          <p className="page-subtitle">Build wealth through systematic saving habits</p>
+          <p className="page-subtitle">Build wealth through systematic saving habits and smart accounts</p>
         </div>
       </div>
 
@@ -33,11 +38,11 @@ function SavingStrategies() {
       <div className="tldr-section">
         <h2>📌 TL;DR - Quick Takeaways</h2>
         <ul className="tldr-list">
-          <li>Automate savings before you can spend it—pay yourself first principle</li>
-          <li>High-yield savings accounts offer 4-5% APY vs 0.01% at traditional banks</li>
-          <li>Use the 24-hour rule for purchases over $50 to eliminate 30-40% of impulse buying</li>
-          <li>Round-up savings can accumulate $300-600 annually without conscious effort</li>
-          <li>Save 50-75% of raises and 100% of bonuses to avoid lifestyle inflation</li>
+          <li><strong>Pay Yourself First:</strong> Treat savings like a mandatory bill—automate it immediately on payday.</li>
+          <li><strong>High-Yield Savings:</strong> Switch to a HYSA to earn ~4.2% APY instead of the 0.01% average at big banks.</li>
+          <li><strong>24-Hour Rule:</strong> Wait one day for purchases over $50 to let the dopamine rush fade.</li>
+          <li><strong>Round-Ups:</strong> Use apps to invest "spare change" from everyday purchases effortlessly.</li>
+          <li><strong>Bank Bonuses:</strong> Save 50-100% of any windfalls (bonuses, tax returns) to fight lifestyle inflation.</li>
         </ul>
       </div>
 
@@ -45,39 +50,30 @@ function SavingStrategies() {
       <section className="content-section">
         <h2>The Philosophy of Paying Yourself First</h2>
         <p>
-          "Pay yourself first" is perhaps the most powerful wealth-building principle in personal finance. The concept 
-          is simple: before you pay your rent, before you buy groceries, before you do anything with your paycheck, 
-          you pay yourself by moving money into savings or investments.
+          "Pay yourself first" reverses the typical budgeting equation. Instead of saving what's left after spending (Income - Expenses = Savings), 
+          you save first and spend what's left (Income - Savings = Expenses).
         </p>
         <p>
-          This inverts the typical approach most people take, which is to save whatever is left over at the end of 
-          the month. The problem with that strategy is there's rarely anything left over. Expenses expand to fill 
-          available income—a phenomenon known as Parkinson's Law applied to money. If you have $3,000 in your checking 
-          account, you'll find ways to spend $3,000.
+          By automating a transfer to savings the moment your paycheck hits, you artificially lower your checking account balance. 
+          Psychologically, you adjust your lifestyle to fit the remaining amount, ensuring you prioritize your future financial 
+          security over immediate, often trivial, wants.
         </p>
-        <p>
-          By automating savings immediately when your paycheck arrives, you never see that money, so you never miss it. 
-          If $500 moves automatically to savings on payday, you'll naturally adjust your spending to the remaining amount. 
-          Your brain treats the remaining balance as your "real" income, and you budget accordingly.
-        </p>
-        <p>
-          Start with whatever percentage you can manage—even 1% is a starting point. If you can't save 1% of your income, 
-          your problem isn't income, it's expenses, and you need to seriously evaluate your lifestyle. Most people can 
-          start at 5-10% and work their way up to 15-20% or more as they eliminate debt and optimize expenses.
-        </p>
-        <p>
-          The key is automation. Manual savings requires willpower every single month, and willpower is a finite resource 
-          that gets depleted by stress, fatigue, and temptation. Automation removes willpower from the equation entirely. 
-          Set it up once, and you'll save consistently for years without thinking about it.
-        </p>
+        <div className="tip-box">
+          <h4>💡 Pro Tip: Split Direct Deposit</h4>
+          <p>
+            Ask your employer to split your paycheck deposit. Have a percentage (e.g., 10%) or a fixed dollar amount sent 
+            directly to a separate savings account, so it never even touches your main spending account.
+          </p>
+        </div>
       </section>
 
       {/* Diagram Section */}
       <section className="diagram-section">
         <h2>High-Yield Savings: The Interest Rate Difference</h2>
         <p className="diagram-intro">
-          On $10,000 in savings, the difference between traditional banks and high-yield accounts is $449 per year. 
-          That's free money you're leaving on the table if you're still using a 0.01% savings account.
+          Don't let your emergency fund rot in a standard checking or savings account. High-Yield Savings Accounts (HYSAs) 
+          are FDIC-insured but offer significantly higher interest rates because they often have lower overhead costs (no physical branches).
+          The chart below compares the annual interest earned on a <strong>$10,000 balance</strong>.
         </p>
         
         <div className="chart-container">
@@ -92,7 +88,7 @@ function SavingStrategies() {
               <YAxis 
                 stroke="#a0a0a0"
                 style={{ fontSize: '14px' }}
-                label={{ value: 'Annual Earnings on $10,000', angle: -90, position: 'insideLeft', fill: '#a0a0a0' }}
+                label={{ value: 'Annual Interest Earned ($)', angle: -90, position: 'insideLeft', fill: '#a0a0a0' }}
               />
               <Tooltip 
                 contentStyle={{ 
@@ -101,144 +97,86 @@ function SavingStrategies() {
                   borderRadius: '8px',
                   color: '#ffffff'
                 }}
-                formatter={(value, name) => {
-                  if (name === 'annual') return [`$${value}`, 'Annual Interest'];
+                itemStyle={{ color: '#ffffff' }}
+                labelStyle={{ color: '#ffffff' }}
+                formatter={(value, name, props) => {
+                  if (name === 'annual') return [props.payload.displayValue, 'Annual Interest'];
                   return value;
                 }}
               />
               <Legend 
                 wrapperStyle={{ color: '#ffffff' }}
               />
-              <Bar dataKey="annual" fill="#34d399" radius={[8, 8, 0, 0]} />
+              <Bar dataKey="annual" fill="#34d399" radius={[8, 8, 0, 0]} name="Annual Interest (approx)" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         <div className="comparison-grid">
-          <div className="comparison-card">
-            <h3>Traditional Bank (0.01%)</h3>
-            <p>Most brick-and-mortar banks offer laughably low rates due to expensive overhead: building rent, tellers' salaries, ATM maintenance.</p>
-            <span className="highlight">$1/year</span>
-            <p style={{ marginTop: '12px', color: '#ef4444' }}>You're essentially giving the bank an interest-free loan</p>
+          <div className="comparison-card" style={{ borderColor: '#ef4444' }}>
+            <h3 style={{ color: '#ef4444' }}>Traditional Bank (~0.01%)</h3>
+            <p>Big brick-and-mortar banks pay almost nothing. On $10,000, you earn enough to buy <strong>one pack of gum</strong> per year.</p>
+            <span className="highlight" style={{ color: '#ef4444' }}>~$1/year</span>
           </div>
 
-          <div className="comparison-card">
-            <h3>High-Yield Savings (4.5%)</h3>
-            <p>Online banks operate with minimal overhead, passing savings to customers through significantly higher rates. FDIC-insured up to $250k.</p>
-            <span className="highlight">$450/year</span>
-            <p style={{ marginTop: '12px', color: '#34d399' }}>Popular: Marcus, Ally, Capital One 360, Discover</p>
+          <div className="comparison-card" style={{ borderColor: '#34d399' }}>
+            <h3 style={{ color: '#34d399' }}>High-Yield Savings (~4.20%)</h3>
+            <p>Online banks (like Ally, Marcus, SoFi) pay 400x more. That same $10,000 earns you a <strong>nice dinner or flight</strong>.</p>
+            <span className="highlight" style={{ color: '#34d399' }}>~$420/year</span>
           </div>
         </div>
       </section>
 
       <section className="content-section">
-        <h2>The 24-Hour Rule: Defeating Impulse Purchases</h2>
+        <h2>The 24-Hour Rule: Mastering Impulse Control</h2>
         <p>
-          Impulse purchases are the silent killer of financial goals. A $40 impulse buy seems harmless, but if you make 
-          one every few days, that's $400-600 per month—$4,800-7,200 per year—disappearing into things you barely remember buying.
+          Impulse buying is often driven by a dopamine hit—the anticipation of the reward. This emotional spike overrides logical decision-making. 
+          The 24-hour rule is a "cooling-off" period.
         </p>
         <p>
-          The 24-hour rule is elegantly simple: for any non-essential purchase over $50, wait 24 hours before buying. 
-          Add the item to a list or leave it in your online shopping cart, but don't complete the purchase immediately. 
-          Return the next day and ask yourself if you still want it.
+          <strong>How it works:</strong> If you see a non-essential item over $50, you <em>cannot</em> buy it immediately. 
+          Wait 24 hours. If you still want it just as badly the next day, you can buy it. Often, the emotional urgency 
+          fades, and your rational brain realizes you don't actually need it.
         </p>
-        <p>
-          Research in behavioral economics shows that desire diminishes rapidly once the immediate emotional trigger passes. 
-          In the moment, your brain is flooded with dopamine, anticipating the pleasure of ownership. This neural excitement 
-          makes every purchase seem justified and necessary. After 24 hours, that neurochemical response fades, and you can 
-          evaluate the purchase rationally.
-        </p>
-
-        <div className="tip-box">
-          <h4>💡 Graduated Waiting Periods</h4>
-          <p>
-            For purchases over $200, wait 72 hours. For items over $1,000, wait a full week. This ensures bigger 
-            decisions receive appropriately longer consideration.
-          </p>
-        </div>
-
-        <p>
-          Studies suggest this simple rule eliminates 30-40% of impulse purchases. Applied to someone who would otherwise 
-          spend $500 monthly on impulse items, the 24-hour rule saves $150-200 per month—$1,800-2,400 per year. That's 
-          a decent vacation or a substantial emergency fund contribution, all saved by simply waiting one day.
-        </p>
-        <p>
-          The beauty of this rule is that it doesn't prevent spending—it just delays it. If you still want the item after 
-          waiting, buy it guilt-free. You've given yourself permission to spend by demonstrating it's not an impulse, 
-          but a considered decision.
-        </p>
-      </section>
-
-      <section className="content-section">
-        <h2>Round-Up Savings: The Power of Small Amounts</h2>
-        <p>
-          Round-up savings leverages a simple psychological principle: we barely notice small amounts leaving our accounts, 
-          but those small amounts add up surprisingly quickly. The concept is straightforward—every time you make a purchase, 
-          round up to the nearest dollar and transfer the difference to savings.
-        </p>
-        <p>
-          Buy a coffee for $3.75? Transfer $0.25 to savings. Gas for $42.18? Transfer $0.82. Each individual transaction 
-          is meaningless, but making 50-100 transactions per month means $25-50 moving automatically to savings without you feeling it.
-        </p>
-        <p>
-          Apps like Acorns, Chime, and Bank of America's "Keep the Change" program automate this process entirely. Alternatively, 
-          you can approximate it manually by transferring a fixed amount—say $50—to savings every week. The key is that it 
-          happens automatically and in amounts too small to trigger loss aversion.
-        </p>
-
         <div className="example-box">
-          <h4>📊 Real-World Example</h4>
+          <h4>🧠 The Psychology</h4>
           <p>
-            Average person making 75 transactions per month with average round-up of $0.40 = $30/month = $360/year. 
-            Over 10 years at 4.5% interest, that becomes $4,500+ without any conscious effort or behavior change.
+            Retailers use "scarcity" (limited time offer!) and "social proof" (bestseller!) to bypass your logic. 
+            Time is the antidote. Waiting shifts your brain from "Hot State" (emotional) to "Cold State" (rational).
           </p>
         </div>
+      </section>
 
+      <section className="content-section">
+        <h2>Round-Up Savings: "Invisible" Saving</h2>
         <p>
-          The psychological benefit extends beyond the money saved. Watching your savings balance grow from these micro-deposits 
-          creates positive reinforcement. You're "finding" money in your regular spending, turning every purchase into a dual 
-          action: buying something you need while simultaneously building savings. This reframes spending as a savings opportunity 
-          rather than just money leaving your account.
+          This strategy makes saving painless by rounding up your transactions to the nearest dollar and depositing the difference.
+          Many banking apps (like Chime or Bank of America) or third-party apps (like Acorns or Qapital) do this automatically.
+        </p>
+        <p>
+          <strong>Example:</strong> You buy a coffee for <strong>$4.50</strong>. The app rounds it up to <strong>$5.00</strong> 
+          and moves the <strong>$0.50</strong> difference into savings.
+        </p>
+        <p>
+          While 50 cents sounds trivial, an average user making 30-40 transactions a month can effortlessly save 
+          <strong>$30-$50/month</strong> without feeling a pinch in their daily budget. It's a great way to start an emergency fund.
         </p>
       </section>
 
       <section className="content-section">
         <h2>Combat Lifestyle Inflation</h2>
         <p>
-          Lifestyle inflation—also called lifestyle creep—is perhaps the biggest obstacle to building wealth. It's the tendency 
-          to increase spending as income increases, preventing any accumulation of wealth despite earning more money. Someone 
-          earning $100,000 can be just as broke as someone earning $40,000 if their expenses rise proportionally with their income.
+          "Lifestyle Creep" is when your spending rises to match your income. You get a raise, so you get a nicer car, 
+          a bigger apartment, or eat out more. You earn more, but you don't <em>keep</em> more.
         </p>
-        <p>
-          This phenomenon is so common it's almost universal. You get a raise, and suddenly the old apartment isn't quite good 
-          enough—you deserve something nicer. The reliable used car feels inadequate—you deserve something newer. Your wardrobe 
-          needs upgrading. You eat out more frequently at better restaurants. Within months, your expenses have absorbed your raise, 
-          leaving you no better off financially.
-        </p>
-
         <div className="tip-box">
-          <h4>💡 The 50/50 Rule for Raises</h4>
+          <h4>💡 The 50/50 Raise Rule</h4>
           <p>
-            Split raises evenly between lifestyle improvements and financial goals. Get a $400/month raise? Increase spending 
-            by $200 and redirect $200 to savings or debt repayment. This gives you the psychological reward of enjoying your 
-            increased income while simultaneously accelerating your financial progress.
+            When you get a raise, commit <strong>50%</strong> of the new income to your current lifestyle (enjoy it!) 
+            and send the other <strong>50%</strong> directly to savings or investments. This allows you to reward yourself 
+            while still accelerating your wealth building.
           </p>
         </div>
-
-        <p>
-          The solution isn't to never improve your lifestyle—that would make earning more feel pointless. Instead, implement 
-          the 50/50 rule for raises and bonuses: split them evenly between lifestyle improvements and financial goals.
-        </p>
-        <p>
-          Bonuses and windfalls deserve even more aggressive saving. Consider saving 75-100% of bonuses, tax refunds, and 
-          unexpected money. You weren't counting on this money for your regular lifestyle, so you won't miss it. These 
-          occasional large deposits can turbocharge your emergency fund, debt payoff, or investment accounts.
-        </p>
-        <p>
-          The mindset shift is crucial: earning more is an opportunity to build wealth, not permission to spend more. Your 
-          future self—the one who wants to retire comfortably, handle emergencies without stress, and have financial options—will 
-          thank you for resisting lifestyle inflation.
-        </p>
       </section>
 
       {/* Sources Section */}
@@ -246,27 +184,27 @@ function SavingStrategies() {
         <h2>📚 Sources & Further Reading</h2>
         <ul className="sources-list">
           <li>
-            <a href="https://www.davidbach.com/books/the-automatic-millionaire/" 
-               target="_blank" rel="noopener noreferrer">
-              David Bach, "The Automatic Millionaire"
-            </a>
-          </li>
-          <li>
             <a href="https://www.bankrate.com/banking/savings/best-high-yield-interests-savings-accounts/" 
                target="_blank" rel="noopener noreferrer">
-              Bankrate - "Best High-Yield Savings Accounts" (updated weekly)
+              Bankrate - Current High-Yield Savings Rates (Dec 2025)
             </a>
           </li>
           <li>
-            <a href="https://www.fdic.gov/" 
+            <a href="https://www.investopedia.com/terms/p/payyourselffirst.asp" 
                target="_blank" rel="noopener noreferrer">
-              Federal Deposit Insurance Corporation (FDIC)
+              Investopedia - "Pay Yourself First" Explained
             </a>
           </li>
           <li>
-            <a href="https://www.iwillteachyoutoberich.com/" 
+            <a href="https://www.citizensbank.com/learning/pay-yourself-first-budget.aspx" 
                target="_blank" rel="noopener noreferrer">
-              Ramit Sethi, "I Will Teach You to Be Rich"
+              Citizens Bank - Understanding the Pay Yourself First Budgeting Method
+            </a>
+          </li>
+          <li>
+            <a href="https://www.skyboundwealth.com/news-and-insights/the-24-hour-rule-the-simple-trick-that-saves-you-thousands" 
+               target="_blank" rel="noopener noreferrer">
+              Skybound Wealth - The 24-Hour Rule: The Simple Trick That Saves You Thousands
             </a>
           </li>
         </ul>

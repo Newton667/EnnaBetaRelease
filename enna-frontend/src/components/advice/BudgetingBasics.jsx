@@ -1,13 +1,21 @@
+import { useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import './AdvicePage.css';
 
 function BudgetingBasics() {
-  // 50/30/20 Budget allocation data
+  const [income, setIncome] = useState(4000);
+
+  // 50/30/20 Budget allocation data (static for the chart)
   const budgetData = [
     { name: 'Needs (50%)', value: 50, color: '#34d399', description: 'Housing, utilities, groceries, transport' },
     { name: 'Wants (30%)', value: 30, color: '#60a5fa', description: 'Dining out, entertainment, hobbies' },
     { name: 'Savings (20%)', value: 20, color: '#f59e0b', description: 'Emergency fund, retirement, debt' }
   ];
+
+  // Dynamic calculations for the calculator
+  const needsAmount = (income * 0.50).toFixed(0);
+  const wantsAmount = (income * 0.30).toFixed(0);
+  const savingsAmount = (income * 0.20).toFixed(0);
 
   return (
     <div className="advice-page">
@@ -24,33 +32,65 @@ function BudgetingBasics() {
       <div className="tldr-section">
         <h2>📌 TL;DR - Quick Takeaways</h2>
         <ul className="tldr-list">
-          <li>Use the 50/30/20 rule: 50% needs, 30% wants, 20% savings/debt</li>
-          <li>Track every expense for at least 30 days to understand your spending patterns</li>
-          <li>Zero-based budgeting ensures every dollar has a specific purpose before the month begins</li>
-          <li>Start small with one category and gradually expand your budget over time</li>
-          <li>Most people underestimate their spending by 10-20% - tracking reveals the truth</li>
+          <li><strong>The Golden Rule:</strong> 50% needs, 30% wants, 20% savings/debt.</li>
+          <li><strong>Track First:</strong> Track every expense for 30 days before setting limits.</li>
+          <li><strong>Zero-Based:</strong> Assign every dollar a job before the month begins.</li>
+          <li><strong>Inflation Check:</strong> Re-evaluate your "Needs" annually as costs rise.</li>
+          <li><strong>Tools:</strong> Use apps or spreadsheets; automation beats willpower.</li>
         </ul>
       </div>
+
+      {/* Interactive Calculator Section (New!) */}
+      <section className="content-section calculator-section">
+        <h2 className="calculator-header">
+          🧮 Interactive 50/30/20 Calculator
+        </h2>
+        <p>Enter your monthly after-tax income to see your personalized breakdown:</p>
+        
+        <div className="calculator-input-container">
+          <label className="calculator-label">Monthly Income:</label>
+          <div className="input-wrapper">
+            <span className="currency-symbol">$</span>
+            <input 
+              type="number" 
+              className="income-input"
+              value={income}
+              onChange={(e) => setIncome(Math.max(0, Number(e.target.value)))}
+            />
+          </div>
+        </div>
+
+        <div className="comparison-grid calculator-grid">
+          <div className="comparison-card needs-card">
+            <h3>Needs (50%)</h3>
+            <p>Rent, utilities, groceries</p>
+            <span className="highlight">${needsAmount}</span>
+          </div>
+          <div className="comparison-card wants-card">
+            <h3>Wants (30%)</h3>
+            <p>Fun, dining, subscriptions</p>
+            <span className="highlight">${wantsAmount}</span>
+          </div>
+          <div className="comparison-card savings-card">
+            <h3>Savings (20%)</h3>
+            <p>Investing, debt payoff</p>
+            <span className="highlight">${savingsAmount}</span>
+          </div>
+        </div>
+      </section>
 
       {/* Content Sections */}
       <section className="content-section">
         <h2>Why Budgeting Matters</h2>
         <p>
-          Budgeting is the cornerstone of financial success, yet it's often misunderstood as restrictive or tedious. 
-          In reality, a budget is simply a plan for your money—a roadmap that tells you where your hard-earned dollars 
-          are going before they disappear. Without a budget, most people experience what financial experts call "income 
-          evaporation": money seems to vanish without a trace, leaving you wondering where your paycheck went.
+          Budgeting is the cornerstone of financial success, yet it's often misunderstood as restrictive. 
+          In reality, a budget is <strong>permission to spend</strong>. It is a plan for your money—a roadmap that tells you where your hard-earned dollars 
+          are going before they disappear.
         </p>
         <p>
           Research consistently shows that people who budget regularly are significantly more likely to achieve their 
-          financial goals, whether that's buying a home, becoming debt-free, or building wealth. The act of budgeting 
-          itself creates awareness, and awareness is the first step toward control. When you know exactly where your 
-          money goes, you can make intentional decisions rather than reactive ones.
-        </p>
-        <p>
-          The psychological benefit is equally important. A budget eliminates the constant mental stress of wondering 
-          if you can afford something. Instead of feeling guilty about spending, you'll know exactly what you can spend 
-          without jeopardizing your financial stability. This mental clarity alone makes budgeting worthwhile.
+          financial goals. The psychological benefit is equally important; a budget eliminates the constant mental stress of wondering 
+          if you can afford that dinner out. When the money is in the "Wants" bucket, you can spend it guilt-free.
         </p>
       </section>
 
@@ -70,7 +110,7 @@ function BudgetingBasics() {
                 cx="50%"
                 cy="50%"
                 labelLine={false}
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
                 outerRadius={120}
                 fill="#8884d8"
                 dataKey="value"
@@ -86,12 +126,14 @@ function BudgetingBasics() {
                   borderRadius: '8px',
                   color: '#ffffff'
                 }}
+                itemStyle={{ color: '#ffffff' }}
+                labelStyle={{ color: '#ffffff' }}
               />
               <Legend 
-                wrapperStyle={{ color: '#ffffff' }}
+                wrapperStyle={{ color: '#ffffff', paddingTop: '20px' }}
                 formatter={(value, entry) => (
-                  <span style={{ color: '#ffffff' }}>
-                    {entry.payload.description}
+                  <span style={{ color: '#e0e0e0', fontSize: '14px', marginLeft: '5px' }}>
+                    {entry.payload.name}
                   </span>
                 )}
               />
@@ -107,8 +149,7 @@ function BudgetingBasics() {
             </div>
             <p>
               Essential expenses you cannot reasonably eliminate: rent/mortgage, utilities, groceries, transportation, 
-              insurance, and minimum debt payments. If your needs exceed 50%, you're likely living beyond your means 
-              and should look for ways to reduce housing costs or refinance debt.
+              insurance, and minimum debt payments. <em>Tip: If your needs exceed 50%, focus on major fixed costs like housing or cars first.</em>
             </p>
           </div>
 
@@ -119,8 +160,7 @@ function BudgetingBasics() {
             </div>
             <p>
               Things that make life enjoyable: dining out, entertainment, hobbies, subscriptions, shopping, vacations. 
-              This category is crucial because a budget that's too restrictive will fail. You need permission to enjoy 
-              your money, and this 30% provides that guilt-free spending space.
+              This category is crucial because a budget that's too restrictive will fail.
             </p>
           </div>
 
@@ -130,9 +170,8 @@ function BudgetingBasics() {
               <span className="breakdown-label">Savings & Debt</span>
             </div>
             <p>
-              Your path to financial freedom: emergency fund, retirement contributions, paying extra on debts beyond 
-              minimums, and investing for future goals. Many advisors argue this should be higher if you're behind 
-              on retirement, but 20% is a solid starting point most people can achieve.
+              Your path to financial freedom: emergency fund, retirement contributions (401k/IRA), and paying extra on debts. 
+              <strong>Pay yourself first</strong> by moving this money as soon as you get paid.
             </p>
           </div>
         </div>
@@ -141,102 +180,52 @@ function BudgetingBasics() {
       <section className="content-section">
         <h2>Zero-Based Budgeting: Give Every Dollar a Job</h2>
         <p>
-          Zero-based budgeting takes a different approach: every single dollar of income gets assigned to a specific 
-          category before the month begins. Your income minus your expenses should equal zero—not because you're 
-          spending everything, but because every dollar has a job, including the dollars assigned to savings.
+          Zero-based budgeting (ZBB) is a more hands-on approach where income minus expenses equals zero. 
+          If you earn $4,000, you assign exactly $4,000 to categories—including savings.
         </p>
-        <p>
-          This method forces intentionality. Instead of seeing what's left over at the end of the month (usually nothing), 
-          you decide upfront how much goes to each category. If you earn $4,000 per month, you might allocate: $1,400 to 
-          rent, $400 to groceries, $200 to utilities, $300 to car expenses, $150 to insurance, $400 to debt payments, 
-          $600 to retirement, $300 to emergency savings, and $250 to entertainment. That totals $4,000—every dollar assigned.
-        </p>
-        <p>
-          The power of zero-based budgeting becomes apparent when you receive unexpected income. Instead of that $500 bonus 
-          disappearing into general spending, you immediately decide its purpose: should it go toward your emergency fund, 
-          an extra debt payment, or saving for a vacation? This prevents lifestyle inflation and accelerates your financial goals.
-        </p>
-        <p>
-          Popular apps like YNAB (You Need A Budget) are built entirely on this principle. While you can do zero-based 
-          budgeting with a simple spreadsheet, apps provide automated tracking and instant visibility into how much you 
-          have left in each category as you spend throughout the month.
-        </p>
-      </section>
-
-      <section className="content-section">
-        <h2>Track Everything for 30 Days</h2>
-        <p>
-          Most people drastically underestimate their spending. Studies show that the average person underestimates their 
-          discretionary spending by 10-20%, with some categories like food and entertainment being off by as much as 50%. 
-          This is why the first step in budgeting isn't creating a budget—it's tracking your actual spending.
-        </p>
-        <p>
-          For 30 days, record every single transaction, no matter how small. That $3 coffee, the $1.50 parking meter, 
-          the $12 lunch—everything. Use a notes app on your phone, a budgeting app, or even a small notebook. Categorize 
-          each expense: groceries, dining out, transportation, entertainment, utilities, etc.
-        </p>
-        <p>
-          At the end of 30 days, you'll have an accurate picture of where your money actually goes. This is often a 
-          revelatory moment. Many people discover they're spending $400 per month dining out when they thought it was $150. 
-          Or they're paying for six streaming services they rarely use. Or small convenience purchases add up to hundreds of dollars.
-        </p>
-        <p>
-          This data becomes the foundation for your realistic budget. You can't budget $200 for groceries if you've been 
-          spending $500. Well, you can, but you'll fail unless you fundamentally change your shopping habits. Real data 
-          leads to real budgets, and real budgets lead to real change.
-        </p>
-      </section>
-
-      <section className="content-section">
-        <h2>Start Small and Build Momentum</h2>
-        <p>
-          The biggest mistake new budgeters make is trying to overhaul everything at once. They create an elaborate 
-          spreadsheet with 25 categories, tracking every penny with military precision. Within two weeks, they're 
-          exhausted and abandon the whole project.
-        </p>
-        <p>
-          Instead, start with one problem area. If you know you overspend on food, focus exclusively on that category 
-          for the first month. Set a reasonable goal—maybe reduce restaurant spending from $400 to $300—and track only 
-          food expenses. Once you've successfully managed that category for a month, add another.
-        </p>
-        <p>
-          This incremental approach works because it builds competence and confidence. Each small win makes you more 
-          capable of handling the next challenge. After three months of successfully managing three categories, adding 
-          a fourth feels natural, not overwhelming.
-        </p>
-        <p>
-          Think of budgeting like going to the gym. You wouldn't attempt to deadlift 300 pounds on your first day. 
-          You'd start with lighter weights, master the form, and gradually increase the load. Budgeting requires the 
-          same progressive approach. Start with one category, master it, and build from there.
-        </p>
+        <div className="example-box">
+          <h4>💡 Example Allocation</h4>
+          <p>
+            Income: $4,000<br/>
+            - $1,400 Rent<br/>
+            - $400 Groceries<br/>
+            - $300 Utilities/Phone<br/>
+            - $300 Car/Transport<br/>
+            - $600 Retirement (Savings)<br/>
+            - $300 Emergency Fund (Savings)<br/>
+            - $400 Debt Payoff<br/>
+            - $300 "Fun Money"<br/>
+            <strong>= $0 Remaining</strong> (Every dollar is assigned!)
+          </p>
+        </div>
       </section>
 
       {/* Sources Section */}
       <section className="sources-section">
-        <h2>📚 Sources & Further Reading</h2>
+        <h2>📚 Sources & Recommended Tools</h2>
         <ul className="sources-list">
           <li>
-            <a href="https://www.harpercollins.com/products/all-your-worth-elizabeth-warrenamazon-warren-tyagi" 
+            <a href="https://www.nerdwallet.com/finance/learn/how-to-budget" 
                target="_blank" rel="noopener noreferrer">
-              Senator Elizabeth Warren, "All Your Worth: The Ultimate Lifetime Money Plan"
+              NerdWallet: "How to Budget Money: A Step-By-Step Guide"
             </a>
           </li>
           <li>
-            <a href="https://www.consumerfinance.gov/about-us/blog/how-to-make-a-budget/" 
+            <a href="https://www.investopedia.com/financial-edge/1109/6-reasons-why-you-need-a-budget.aspx" 
                target="_blank" rel="noopener noreferrer">
-              Consumer Financial Protection Bureau - "How to Make a Budget"
+              Investopedia: "Budgeting Basics - Why You Need a Budget"
             </a>
           </li>
           <li>
-            <a href="https://www.nfcc.org/" 
+            <a href="https://consumer.gov/content/make-budget-worksheet" 
                target="_blank" rel="noopener noreferrer">
-              National Foundation for Credit Counseling - "Budgeting Best Practices"
+              Consumer.gov: "Make a Budget - Official Worksheet"
             </a>
           </li>
           <li>
-            <a href="https://www.ynab.com/the-four-rules" 
+            <a href="https://bettermoneyhabits.bankofamerica.com/en/saving-budgeting/creating-a-budget" 
                target="_blank" rel="noopener noreferrer">
-              You Need A Budget (YNAB) - "The Four Rules of YNAB"
+              Better Money Habits: "Your Guide to Creating a Budget Plan"
             </a>
           </li>
         </ul>

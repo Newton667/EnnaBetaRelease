@@ -100,6 +100,7 @@
   flex-shrink: 0;
   width: 24px;
   text-align: center;
+  margin-left: -5px;
 }
 
 .nav-label {
@@ -132,6 +133,7 @@
 .profile-emoji {
   font-size: 28px !important;
   width: 32px !important;
+  margin-left: -10px !important;
 }
 
 .profile-name {
