@@ -4,8 +4,9 @@
 
 A comprehensive local-first budgeting application to help you take control of your finances. Built with modern web technologies and packaged as a standalone desktop app - no internet connection required!
 
-![Enna Logo](https://via.placeholder.com/150x150?text=Enna+Logo)
-<!-- Replace with actual logo screenshot -->
+<img width="288" height="400" alt="EnnaNeutral" src="https://github.com/user-attachments/assets/c40d6c06-7a7b-4fbd-8f6c-b0a8ab91ccba" />
+
+<img width="342" height="320" alt="Logo" src="https://github.com/user-attachments/assets/e617a562-9e40-486d-9490-b15055335af3" />
 
 ---
 
@@ -101,13 +102,7 @@ That's it! No Python, Node.js, or other dependencies needed.
 
 ## 📸 Screenshots
 
-<!-- Add screenshots here -->
-```
-[ Dashboard Screenshot ]
-[ Budget Planning Screenshot ]
-[ Reports Screenshot ]
-[ Transaction Tracker Screenshot ]
-```
+<img width="1920" height="1000" alt="DCapture" src="https://github.com/user-attachments/assets/c6432532-9107-456b-ba47-c49808bdc9ff" />
 
 ---
 
@@ -158,12 +153,6 @@ This is a **beta release**. While fully functional, you may encounter:
 ## 🗺️ Roadmap
 
 **Coming in Future Versions:**
-- [ ] Multi-currency support
-- [ ] Recurring transactions
-- [ ] Bill reminders
-- [ ] Goal tracking (savings goals, debt payoff)
-- [ ] Data export (PDF reports, CSV exports)
-- [ ] Dark mode
 - [ ] Mac and Linux versions
 - [ ] AI-powered insights (future major release)
 
@@ -178,10 +167,6 @@ This is a **beta release**. While fully functional, you may encounter:
 ---
 
 ## 💡 Tips & Tricks
-
-**Keyboard Shortcuts:**
-- `Ctrl + S` - Save when editing transactions
-- `Esc` - Cancel editing
 
 **Best Practices:**
 - Create archives monthly to track your progress
@@ -203,7 +188,7 @@ This is a beta release and contributions are welcome! Areas of interest:
 
 ## 📄 License
 
-[Your chosen license - e.g., MIT, GPL, etc.]
+   MIT License - see [LICENSE](LICENSE) file for details
 
 ---
 
@@ -215,8 +200,6 @@ Created by **Newton** with 💚
 
 ## 🙏 Acknowledgments
 
-- Built with guidance from Claude (Anthropic)
-- Icon design: [Credit if applicable]
 - Financial advice sources cited in-app
 
 ---
