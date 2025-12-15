@@ -208,7 +208,6 @@ Created by **Newton** with 💚
 
 Having issues? Check out:
 - [Issues](https://github.com/Newton667/EnnaBetaRelease/issues) - Report bugs or request features
-- [Discussions](https://github.com/Newton667/EnnaBetaRelease/discussions) - Ask questions and share ideas
 
 ---
 
