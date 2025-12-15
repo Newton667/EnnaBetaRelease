@@ -4,9 +4,8 @@
 
 A comprehensive local-first budgeting application to help you take control of your finances. Built with modern web technologies and packaged as a standalone desktop app - no internet connection required!
 
-<img width="342" height="320" alt="Logo" src="https://github.com/user-attachments/assets/8f05359e-8040-432b-ae13-ab4ab3d14a99" /> <img width="299" height="400" alt="EnnaNeutral" src="https://github.com/user-attachments/assets/0c998507-8d49-4e9d-bf86-5e2aa9ee4b2c" />
-
-
+![Enna Logo](https://via.placeholder.com/150x150?text=Enna+Logo)
+<!-- Replace with actual logo screenshot -->
 
 ---
 
@@ -76,7 +75,7 @@ Enna is your personal financial companion, featuring an anime-style mascot to ma
 
 ### Windows
 
-1. **Download** `EnnaSetup-v1.0.0.exe` from the [Releases](../../releases) page
+1. **Download** `EnnaSetup-v1.0.0.exe` from the [Releases](https://github.com/Newton667/EnnaBetaRelease/releases) page
 2. **Run the installer** - double-click the downloaded file
 3. **Follow the setup wizard:**
    - Choose installation location (default: `C:\Program Files\Enna`)
@@ -103,9 +102,12 @@ That's it! No Python, Node.js, or other dependencies needed.
 ## 📸 Screenshots
 
 <!-- Add screenshots here -->
-
-<img width="960" height="500" alt="DCapture" src="https://github.com/user-attachments/assets/f23cd74d-dff4-44d7-bce7-edd8400c888c" />
-
+```
+[ Dashboard Screenshot ]
+[ Budget Planning Screenshot ]
+[ Reports Screenshot ]
+[ Transaction Tracker Screenshot ]
+```
 
 ---
 
@@ -149,17 +151,37 @@ This is a **beta release**. While fully functional, you may encounter:
 - Edge cases in CSV importing
 - Potential bugs in complex workflows
 
-**Please report issues** in the [Issues](../../issues) tab! Your feedback helps make Enna better.
+**Please report issues** in the [Issues](https://github.com/Newton667/EnnaBetaRelease/issues) tab! Your feedback helps make Enna better.
 
 ---
 
 ## 🗺️ Roadmap
 
 **Coming in Future Versions:**
+- [ ] Multi-currency support
+- [ ] Recurring transactions
+- [ ] Bill reminders
+- [ ] Goal tracking (savings goals, debt payoff)
+- [ ] Data export (PDF reports, CSV exports)
+- [ ] Dark mode
 - [ ] Mac and Linux versions
 - [ ] AI-powered insights (future major release)
 
 ---
+
+## 🐛 Known Issues
+
+- CSV import may require manual category mapping for some bank formats
+- Very large databases (10,000+ transactions) may experience slight slowdown
+- The console window must stay open while using the app
+
+---
+
+## 💡 Tips & Tricks
+
+**Keyboard Shortcuts:**
+- `Ctrl + S` - Save when editing transactions
+- `Esc` - Cancel editing
 
 **Best Practices:**
 - Create archives monthly to track your progress
@@ -181,7 +203,7 @@ This is a beta release and contributions are welcome! Areas of interest:
 
 ## 📄 License
 
-   MIT License - see [LICENSE](LICENSE) file for details
+[Your chosen license - e.g., MIT, GPL, etc.]
 
 ---
 
@@ -193,6 +215,8 @@ Created by **Newton** with 💚
 
 ## 🙏 Acknowledgments
 
+- Built with guidance from Claude (Anthropic)
+- Icon design: [Credit if applicable]
 - Financial advice sources cited in-app
 
 ---
@@ -200,8 +224,8 @@ Created by **Newton** with 💚
 ## 📞 Support
 
 Having issues? Check out:
-- [Issues](../../issues) - Report bugs or request features
-- [Discussions](../../discussions) - Ask questions and share ideas
+- [Issues](https://github.com/Newton667/EnnaBetaRelease/issues) - Report bugs or request features
+- [Discussions](https://github.com/Newton667/EnnaBetaRelease/discussions) - Ask questions and share ideas
 
 ---
 
@@ -214,6 +238,6 @@ If Enna helps you manage your finances better, consider:
 
 ---
 
-**Download Now:** [EnnaSetup-v1.0.0.exe](../../releases/latest)
+**Download Now:** [EnnaSetup-v1.0.0.exe](https://github.com/Newton667/EnnaBetaRelease/releases/latest)
 
 *Take control of your finances with Enna! 🌸💰*
